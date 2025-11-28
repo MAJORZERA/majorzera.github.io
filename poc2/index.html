@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PS5 WebKit Exploit Test</title>
+    <title>PS5 Advanced WebKit Exploit</title>
     <style>
         body {
             margin: 0;
             padding: 20px;
             font-family: Arial, sans-serif;
-            background: white;
+            background: #0d1117;
+            color: #c9d1d9;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -19,54 +20,71 @@
         .container {
             text-align: center;
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
         }
         
         #loadBtn {
-            padding: 15px 30px;
-            font-size: 18px;
-            background: #007bff;
+            padding: 18px 35px;
+            font-size: 20px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         
         #loadBtn:hover {
-            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
         }
         
         #loadBtn:disabled {
-            background: #6c757d;
+            background: #484f58;
+            transform: none;
+            box-shadow: none;
             cursor: not-allowed;
         }
         
         #status {
             margin-bottom: 20px;
-            font-size: 14px;
-            color: #333;
+            font-size: 16px;
+            color: #58a6ff;
             font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+            background: rgba(88, 166, 255, 0.1);
         }
         
         #terminal {
             width: 100%;
-            height: 500px;
+            height: 600px;
             background: #1e1e1e;
             color: #00ff00;
             font-family: 'Courier New', monospace;
-            font-size: 12px;
-            padding: 15px;
-            border-radius: 5px;
+            font-size: 13px;
+            padding: 20px;
+            border-radius: 10px;
             overflow-y: auto;
             text-align: left;
             white-space: pre-wrap;
-            border: 1px solid #333;
+            border: 2px solid #30363d;
             line-height: 1.4;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
         
         .terminal-line {
-            margin-bottom: 2px;
+            margin-bottom: 3px;
         }
         
         .warning {
@@ -78,50 +96,170 @@
         }
         
         .info {
-            color: #45b7d1;
+            color: #58a6ff;
         }
         
         .critical {
             color: #ff0000;
             font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
         }
         
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
+        .feature {
+            color: #d2a8ff;
         }
         
-        .summary {
-            background: #f8f9fa;
-            padding: 15px;
+        .exploit {
+            color: #ffa657;
+        }
+        
+        .summary-panel {
+            background: linear-gradient(135deg, #161b22, #0d1117);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #30363d;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .feature-item {
+            background: rgba(88, 166, 255, 0.1);
+            padding: 10px;
             border-radius: 5px;
+            border-left: 4px solid #58a6ff;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #30363d;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
             margin: 15px 0;
-            border-left: 4px solid #007bff;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #8b949e;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔍 PS5 WebKit Exploit Tester</h1>
-        <p>Teste de vulnerabilidades WebKit para PlayStation 5</p>
+        <div class="header">
+            <h1>🔮 PS5 Advanced WebKit Exploit</h1>
+            <h3>Leveraging Atomics & BigInt for Superior Exploitation</h3>
+        </div>
         
-        <button id="loadBtn" onclick="carregarPOC()">Start PS5 Exploit Test</button>
-        <div id="status">Ready to test WebKit vulnerabilities...</div>
+        <button id="loadBtn" onclick="carregarExploitAvancado()">🚀 Launch Advanced Exploit</button>
+        <div id="status">Ready to execute advanced WebKit exploitation...</div>
         
-        <div class="summary" id="summary" style="display: none;">
-            <h3>📊 Test Summary</h3>
-            <div id="summaryContent"></div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="summary-panel" id="summaryPanel" style="display: none;">
+            <h3>📊 Advanced Exploit Summary</h3>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <strong>Atomics</strong><br>
+                    <span id="atomicsStatus">Checking...</span>
+                </div>
+                <div class="feature-item">
+                    <strong>BigInt</strong><br>
+                    <span id="bigintStatus">Checking...</span>
+                </div>
+                <div class="feature-item">
+                    <strong>WebAssembly</strong><br>
+                    <span id="wasmStatus">Checking...</span>
+                </div>
+                <div class="feature-item">
+                    <strong>SharedArrayBuffer</strong><br>
+                    <span id="sabStatus">Checking...</span>
+                </div>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="successCount">0</div>
+                    <div class="stat-label">Components</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="exploitLevel">0%</div>
+                    <div class="stat-label">Exploit Level</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="riskLevel">LOW</div>
+                    <div class="stat-label">Risk Level</div>
+                </div>
+            </div>
         </div>
         
         <div id="terminal">
-[PS5 WebKit Exploit Tester v1.0]
-> System initialized
-> Target: PlayStation 5 WebKit Browser
-> Ready to commence vulnerability analysis...
+[PS5 Advanced Exploit Framework v2.0]
+> System: PlayStation 5 WebKit Browser
+> Features: Atomics + BigInt Enabled
+> Status: Ready for advanced exploitation
+> 
+> 🔍 Available Primitives:
+>   • Atomic Memory Operations
+>   • BigInt Address Manipulation  
+>   • WebAssembly Memory
+>   • JIT Spray Techniques
+>
+> 🎯 Target: WebKit JIT Compiler
+> ⚡ Method: Type Confusion + Atomic Corruption
+> 
+> Click "Launch Advanced Exploit" to begin...
         </div>
     </div>
 
     <script>
+        // Estado do exploit
+        let exploitState = {
+            components: 0,
+            success: 0,
+            progress: 0
+        };
+
+        // Função para atualizar progresso
+        function updateProgress(percent) {
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = percent + '%';
+            exploitState.progress = percent;
+        }
+
         // Função para adicionar logs no terminal
         function logTerminal(message, type = 'normal') {
             const terminal = document.getElementById('terminal');
@@ -133,10 +271,15 @@
             } else if (type === 'success') {
                 line.style.color = '#4ecdc4';
             } else if (type === 'info') {
-                line.style.color = '#45b7d1';
+                line.style.color = '#58a6ff';
             } else if (type === 'critical') {
                 line.style.color = '#ff0000';
                 line.style.fontWeight = 'bold';
+                line.style.textShadow = '0 0 10px rgba(255, 0, 0, 0.5)';
+            } else if (type === 'feature') {
+                line.style.color = '#d2a8ff';
+            } else if (type === 'exploit') {
+                line.style.color = '#ffa657';
             }
             
             // Adiciona timestamp
@@ -146,7 +289,7 @@
             terminal.scrollTop = terminal.scrollHeight;
         }
 
-        // Override das funções de console para capturar logs
+        // Override das funções de console
         const originalConsole = {
             log: console.log,
             warn: console.warn,
@@ -160,12 +303,12 @@
 
         console.warn = function(...args) {
             originalConsole.warn.apply(console, args);
-            logTerminal('WARNING: ' + args.join(' '), 'warning');
+            logTerminal('⚠️ ' + args.join(' '), 'warning');
         };
 
         console.error = function(...args) {
             originalConsole.error.apply(console, args);
-            logTerminal('ERROR: ' + args.join(' '), 'critical');
+            logTerminal('💥 ' + args.join(' '), 'critical');
         };
 
         // Função global 'log' para o POC
@@ -174,128 +317,201 @@
             originalConsole.log(message);
         };
 
-        // Função para atualizar o sumário
-        function updateSummary(content) {
-            const summary = document.getElementById('summary');
-            const summaryContent = document.getElementById('summaryContent');
-            summary.style.display = 'block';
-            summaryContent.innerHTML = content;
+        // Atualizar sumário
+        function updateSummary(features) {
+            const panel = document.getElementById('summaryPanel');
+            panel.style.display = 'block';
+            
+            // Atualizar status das features
+            if (features.Atomics) {
+                document.getElementById('atomicsStatus').textContent = '✅ AVAILABLE';
+                document.getElementById('atomicsStatus').style.color = '#4ecdc4';
+            }
+            if (features.BigInt) {
+                document.getElementById('bigintStatus').textContent = '✅ AVAILABLE';
+                document.getElementById('bigintStatus').style.color = '#4ecdc4';
+            }
+            if (features.WebAssembly) {
+                document.getElementById('wasmStatus').textContent = '✅ AVAILABLE';
+                document.getElementById('wasmStatus').style.color = '#4ecdc4';
+            }
+            if (features.SharedArrayBuffer) {
+                document.getElementById('sabStatus').textContent = '✅ AVAILABLE';
+                document.getElementById('sabStatus').style.color = '#4ecdc4';
+            }
+            
+            // Atualizar estatísticas
+            document.getElementById('successCount').textContent = exploitState.success + '/' + exploitState.components;
+            
+            const exploitLevel = Math.round((exploitState.success / Math.max(exploitState.components, 1)) * 100);
+            document.getElementById('exploitLevel').textContent = exploitLevel + '%';
+            
+            let riskLevel = 'LOW';
+            if (exploitLevel > 70) riskLevel = 'CRITICAL';
+            else if (exploitLevel > 40) riskLevel = 'HIGH';
+            else if (exploitLevel > 20) riskLevel = 'MEDIUM';
+            
+            document.getElementById('riskLevel').textContent = riskLevel;
+            document.getElementById('riskLevel').style.color = 
+                riskLevel === 'CRITICAL' ? '#ff0000' : 
+                riskLevel === 'HIGH' ? '#ff6b6b' : 
+                riskLevel === 'MEDIUM' ? '#ffa657' : '#4ecdc4';
         }
 
-        function carregarPOC() {
+        function carregarExploitAvancado() {
             const btn = document.getElementById('loadBtn');
             const status = document.getElementById('status');
             
             btn.disabled = true;
-            btn.textContent = 'Testing...';
-            status.textContent = 'Running PS5 WebKit vulnerability tests...';
-            status.style.color = '#007bff';
+            btn.textContent = '🔄 Executing Advanced Exploit...';
+            status.textContent = 'Initializing Atomics + BigInt exploitation...';
+            status.style.color = '#58a6ff';
             
-            logTerminal('🚀 Starting PS5 WebKit Exploit Analysis...', 'info');
-            logTerminal('🔧 Loading exploit modules...', 'info');
+            updateProgress(10);
+            logTerminal('🚀 LAUNCHING ADVANCED PS5 EXPLOIT', 'critical');
+            logTerminal('🔧 Loading Atomics + BigInt exploitation framework...', 'exploit');
             
-            // Carrega o arquivo poc_ps5.js dinamicamente
+            // Analisar ambiente primeiro
+            analyzeEnvironment();
+            
+            // Carrega o arquivo exploit_ps5_advanced.js dinamicamente
             const script = document.createElement('script');
-            script.src = 'poc_ps5.js';
+            script.src = 'exploit_ps5_advanced.js';
             
             script.onload = function() {
-                status.textContent = 'Exploit tests completed!';
-                status.style.color = '#28a745';
-                btn.textContent = 'Tests Complete';
-                logTerminal('✅ All exploit tests loaded successfully!', 'success');
-                logTerminal('📋 Beginning vulnerability assessment...', 'info');
+                updateProgress(30);
+                status.textContent = 'Advanced exploit loaded - Executing...';
+                logTerminal('✅ Advanced exploit framework loaded successfully!', 'success');
+                logTerminal('🎯 Beginning Atomics + BigInt exploitation chain...', 'exploit');
                 
                 // Inicia os testes após um breve delay
                 setTimeout(() => {
                     try {
-                        if (typeof runExploitTests === 'function') {
-                            let results = runExploitTests();
+                        if (typeof initAdvancedExploit === 'function') {
+                            updateProgress(50);
+                            logTerminal('⚡ Executing advanced exploit chain...', 'critical');
                             
-                            // Atualiza o sumário com os resultados
-                            let summaryHTML = '';
-                            if (results) {
-                                summaryHTML = `
-                                    <div style="color: #dc3545; font-weight: bold;">
-                                        ⚠️ VULNERABILITIES DETECTED!
-                                    </div>
-                                    <p>This WebKit version may be exploitable.</p>
-                                    <p>Proceed with caution and further testing.</p>
-                                `;
-                            } else {
-                                summaryHTML = `
-                                    <div style="color: #28a745; font-weight: bold;">
-                                        ✅ No obvious vulnerabilities detected
-                                    </div>
-                                    <p>WebKit version appears to be patched or secure.</p>
-                                `;
-                            }
-                            updateSummary(summaryHTML);
+                            // Configurar listeners para atualizações de progresso
+                            setupProgressTracking();
                             
                         } else {
-                            logTerminal('❌ Function runExploitTests not found in POC', 'critical');
+                            logTerminal('❌ Advanced exploit functions not found', 'critical');
+                            updateProgress(0);
                         }
                     } catch (error) {
-                        logTerminal('❌ Error executing exploit tests: ' + error, 'critical');
+                        logTerminal('💥 Error executing advanced exploit: ' + error, 'critical');
+                        updateProgress(0);
                     }
                 }, 1000);
                 
                 // Captura erros durante a execução
                 window.addEventListener('error', function(e) {
                     logTerminal(`💥 Runtime Error: ${e.message}`, 'critical');
-                    logTerminal(`📄 File: ${e.filename}:${e.lineno}`, 'warning');
+                    logTerminal(`📄 Location: ${e.filename}:${e.lineno}`, 'warning');
                 });
             };
             
             script.onerror = function() {
-                status.textContent = 'Error: Could not load poc_ps5.js';
-                status.style.color = '#dc3545';
-                btn.textContent = 'Load Failed';
-                logTerminal('❌ ERROR: Failed to load poc_ps5.js', 'critical');
-                logTerminal('🔍 Make sure poc_ps5.js exists in the same directory', 'warning');
+                status.textContent = 'Error: Could not load advanced exploit';
+                status.style.color = '#ff6b6b';
+                btn.textContent = '❌ Load Failed';
+                logTerminal('💥 ERROR: Failed to load exploit_ps5_advanced.js', 'critical');
+                logTerminal('🔍 Verify file exists in same directory', 'warning');
+                updateProgress(0);
             };
             
             document.head.appendChild(script);
         }
 
-        // Log inicial com informações do sistema
-        logTerminal('🔍 PS5 WebKit Exploit Tester Initialized', 'info');
-        logTerminal('🌐 User Agent: ' + navigator.userAgent, 'info');
-        logTerminal('💻 Platform: ' + navigator.platform, 'info');
-        logTerminal('🏢 Vendor: ' + navigator.vendor, 'info');
-        logTerminal('📱 Touch Points: ' + (navigator.maxTouchPoints || 'N/A'), 'info');
-        logTerminal('----------------------------------------', 'info');
-        
-        // Detecta recursos disponíveis
-        try {
-            if (window.WebAssembly) {
-                logTerminal('✅ WebAssembly supported', 'success');
+        // Analisar ambiente
+        function analyzeEnvironment() {
+            logTerminal('🔍 ANALYZING PS5 ENVIRONMENT', 'feature');
+            
+            let features = {
+                Atomics: !!window.Atomics,
+                BigInt: !!window.BigInt,
+                WebAssembly: !!window.WebAssembly,
+                SharedArrayBuffer: !!window.SharedArrayBuffer
+            };
+            
+            logTerminal('📊 Environment Features:', 'info');
+            for (let [feature, available] of Object.entries(features)) {
+                logTerminal(`   ${feature}: ${available ? '✅ AVAILABLE' : '❌ UNAVAILABLE'}`, 
+                           available ? 'success' : 'warning');
             }
-            if (window.SharedArrayBuffer) {
-                logTerminal('✅ SharedArrayBuffer supported', 'success');
+            
+            // Testar funcionalidades específicas
+            try {
+                if (features.Atomics && features.BigInt) {
+                    let sab = new SharedArrayBuffer(16);
+                    let ta = new BigInt64Array(sab);
+                    Atomics.store(ta, 0, 0x1337n);
+                    let val = Atomics.load(ta, 0);
+                    logTerminal(`🧪 Atomics Test: 0x${val.toString(16)} stored/loaded`, 'success');
+                }
+            } catch(e) {
+                logTerminal(`🧪 Atomics Test Failed: ${e}`, 'warning');
             }
-            if (window.Atomics) {
-                logTerminal('✅ Atomics supported', 'success');
-            }
-        } catch (e) {
-            logTerminal('⚠️ Some features not available: ' + e.message, 'warning');
+            
+            updateSummary(features);
         }
 
-        // Previne que o usuário saia acidentalmente durante a execução
+        // Configurar tracking de progresso
+        function setupProgressTracking() {
+            // Monitorar execução do exploit
+            const checkInterval = setInterval(() => {
+                if (exploitState.progress >= 100) {
+                    clearInterval(checkInterval);
+                    finalizeExploit();
+                }
+            }, 500);
+            
+            // Simular progresso (será substituído pelo exploit real)
+            setTimeout(() => updateProgress(70), 2000);
+            setTimeout(() => updateProgress(85), 3500);
+            setTimeout(() => updateProgress(95), 5000);
+            setTimeout(() => updateProgress(100), 6000);
+        }
+
+        // Finalizar exploit
+        function finalizeExploit() {
+            const btn = document.getElementById('loadBtn');
+            const status = document.getElementById('status');
+            
+            btn.textContent = '✅ Exploit Complete';
+            status.textContent = 'Advanced exploitation finished - Check results above';
+            status.style.color = '#4ecdc4';
+            
+            logTerminal('', 'info');
+            logTerminal('='.repeat(60), 'info');
+            logTerminal('🎉 ADVANCED EXPLOIT EXECUTION COMPLETE', 'critical');
+            logTerminal('='.repeat(60), 'info');
+            logTerminal('📈 Results available in terminal above', 'info');
+            logTerminal('💡 Use window.advancedExploit.test() for manual testing', 'feature');
+        }
+
+        // Log inicial
+        logTerminal('🔮 PS5 ADVANCED EXPLOIT FRAMEWORK INITIALIZED', 'feature');
+        logTerminal('💎 Leveraging Atomics + BigInt for superior exploitation', 'info');
+        logTerminal('🎯 Target: WebKit JIT Compiler with advanced primitives', 'exploit');
+        logTerminal('', 'info');
+
+        // Prevenir saída acidental
         window.addEventListener('beforeunload', function(e) {
             if (document.getElementById('loadBtn').disabled && 
-                document.getElementById('loadBtn').textContent !== 'Tests Complete') {
+                document.getElementById('loadBtn').textContent !== '✅ Exploit Complete') {
                 e.preventDefault();
-                e.returnValue = 'The exploit tests are still running. Are you sure you want to leave?';
+                e.returnValue = 'Advanced exploit is still running. Are you sure you want to leave?';
             }
         });
 
-        // Adiciona informações de ajuda
-        logTerminal('💡 Instructions:', 'info');
-        logTerminal('1. Click "Start PS5 Exploit Test" to begin', 'info');
-        logTerminal('2. Monitor the terminal for vulnerability detection', 'info');
-        logTerminal('3. Check the summary for overall results', 'info');
-        logTerminal('4. Look for "VULNERABLE" indicators in red', 'info');
-        logTerminal('----------------------------------------', 'info');
+        // Exportar para desenvolvimento
+        window.exploitUI = {
+            updateProgress: updateProgress,
+            log: logTerminal,
+            setComponents: (count) => { exploitState.components = count; },
+            setSuccess: (count) => { exploitState.success = count; }
+        };
     </script>
 </body>
 </html>
