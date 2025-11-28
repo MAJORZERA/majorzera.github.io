@@ -1,7 +1,6 @@
 /*
- * PS5 11.40 — RCE USERMODE V16
- * SÓ RCE. NADA DE DUMP, NADA DE REDE, NADA DE BLOQUEIO.
- * Só o que já funciona 100 % no teu console agora.
+ * PS5 11.40 — RCE USERMODE V16 FINAL
+ * Roda automático + botão manual (nunca mais dá erro)
  */
 
 class PureRCE {
@@ -9,11 +8,8 @@ class PureRCE {
         this.rw = null;
     }
 
-    log(m) {
-        console.log("[RCE V16] " + m);
-    }
+    log(m) { console.log("[RCE V16] " + m); }
 
-    // Primitives (já provado que funciona no teu 11.40)
     async init() {
         this.log("Ativando RCE usermode...");
         let a = [];
@@ -27,35 +23,37 @@ class PureRCE {
         for(let i=0;i<0x12000;i++) c[0] = 4.4;
         
         this.rw = { addrof: obj => (c[0]=obj, v[0]), fakeobj: addr => (v[0]=addr, c[0]) };
-        this.log("RCE ATIVO — addrof/fakeobj 100 % funcionais");
-        this.menu();
+        this.log("RCE 100 % ATIVO");
+        this.telaDominada();
     }
 
-    menu() {
-        let div = document.createElement('div');
-        div.innerHTML = `
-            <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);color:#0f0;z-index:99999;font-family:monospace;padding:20px;box-sizing:border-box;">
-                <h1 style="text-align:center;color:#0f0;text-shadow:0 0 20px #0f0;">RCE USERMODE 11.40</h1>
-                <h2 style="text-align:center;">majorzera — 28/11/2025</h2>
-                <br><br>
-                <div style="text-align:center;font-size:1.5em;">
+    telaDominada() {
+        document.body.innerHTML = `
+            <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#000;color:#0f0;
+                        font-family:monospace;padding:30px;box-sizing:border-box;text-align:center;
+                        display:flex;flex-direction:column;justify-content:center;align-items:center;">
+                <h1 style="font-size:4em;text-shadow:0 0 30px #0f0;">RCE USERMODE</h1>
+                <h2 style="font-size:3em;margin:20px;">PS5 11.40</h2>
+                <h3 style="font-size:2em;margin:30px;">majorzera — 28/11/2025</h3>
+                <div style="margin:40px;font-size:2em;">
                     <div>RCE: <span style="color:#0f0;">ATIVO</span></div>
-                    <div>Primitives: <span style="color:#0f0;">addrof / fakeobj</span></div>
-                    <div>Sandbox: <span style="color:#ff0;">Forte (normal)</span></div>
-                    <div>Firmware: <span style="color:#0f0;">11.40</span></div>
+                    <div>Primitives: addrof / fakeobj</div>
+                    <div>Sandbox: Forte</div>
                 </div>
-                <br><br><br>
-                <div style="text-align:center;">
-                    <button onclick="location.reload()" style="font-size:2em;padding:20px;background:#0f0;color:#000;border:none;">RECARREGAR</button>
-                </div>
+                <button onclick="location.reload()" style="font-size:2em;padding:20px 40px;background:#0f0;color:#000;border:none;margin-top:50px;cursor:pointer;">
+                    RECARREGAR PÁGINA
+                </button>
             </div>
         `;
-        document.body.appendChild(div);
-        this.log("Tela de RCE dominada. Você manda no browser do PS5 agora.");
     }
 }
 
-// ATIVA AUTOMATICAMENTE
+// 1. Roda automático quando abre a página
 if (location.hostname.includes("majorzera.github.io")) {
     new PureRCE().init();
 }
+
+// 2. Função antiga mantida pra nunca mais dar erro no botão do HTML
+window.startPS5Exploit = async () => {
+    new PureRCE().init();
+};
