@@ -1,1 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Engine Exploit POC</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+        .container {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #58a6ff;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+        }
+        button {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2ea043;
+        }
+        button:disabled {
+            background-color: #484f58;
+            cursor: not-allowed;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #0d1117;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #7ee787;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .running {
+            background-color: #1c6ea4;
+            color: white;
+        }
+        .success {
+            background-color: #238636;
+            color: white;
+        }
+        .error {
+            background-color: #da3633;
+            color: white;
+        }
+        .warning {
+            background-color: #9e6a03;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JavaScript Engine Exploit POC</h1>
+        <p>Este POC demonstra uma vulnerabilidade de tipo confusa (type confusion) em motores JavaScript.</p>
+        
+        <div class="status" id="status">Pronto para executar...</div>
+        
+        <div>
+            <button onclick="executarPOC()" id="executarBtn">Executar Exploit</button>
+            <button onclick="limparOutput()">Limpar Output</button>
+            <button onclick="pararExecucao()" id="pararBtn" disabled>Parar Execução</button>
+        </div>
+        
+        <div id="output">
+            Clique em "Executar Exploit" para iniciar o POC...
+        </div>
+    </div>
 
+    <!-- Carrega o arquivo poc.js externo -->
+    <script src="poc.js"></script>
+
+    <script>
+        // Polyfill para a função print do seu POC
+        function print(message) {
+            const output = document.getElementById('output');
+            output.textContent += message + '\n';
+            output.scrollTop = output.scrollHeight;
+            console.log(message);
+        }
+
+        // Polyfill para a função describe (simplificada)
+        function describe(obj) {
+            if (typeof obj === 'object') {
+                return `[Object ${obj.constructor.name}]`;
+            }
+            return String(obj);
+        }
+
+        let isRunning = false;
+
+        function atualizarStatus(mensagem, tipo) {
+            const status = document.getElementById('status');
+            status.textContent = mensagem;
+            status.className = 'status ' + (tipo || '');
+        }
+
+        function executarPOC() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            document.getElementById('executarBtn').disabled = true;
+            document.getElementById('pararBtn').disabled = false;
+            
+            const output = document.getElementById('output');
+            output.textContent = 'Iniciando exploit...\n';
+            
+            atualizarStatus('Executando exploit...', 'running');
+            
+            try {
+                // Verifica se as funções do poc.js estão disponíveis
+                if (typeof trigger === 'undefined') {
+                    throw new Error('poc.js não foi carregado corretamente');
+                }
+                
+                // Executa o exploit
+                setTimeout(() => {
+                    try {
+                        // Chama a função principal do exploit
+                        // Se seu poc.js tem uma função principal, chame-a aqui
+                        // Caso contrário, o código será executado automaticamente ao carregar
+                        print('[+] POC carregado e executando...');
+                        
+                        // Se você quiser controlar quando o exploit roda,
+                        // pode modificar o poc.js para exportar uma função main
+                        // e chamá-la aqui: main();
+                        
+                    } catch (error) {
+                        print(`[!] Erro durante a execução: ${error}`);
+                        print(`[!] Stack trace: ${error.stack}`);
+                        atualizarStatus('Erro durante a execução', 'error');
+                        pararExecucao();
+                    }
+                }, 100);
+                
+            } catch (error) {
+                print(`[!] Erro ao iniciar: ${error}`);
+                atualizarStatus('Erro ao iniciar', 'error');
+                pararExecucao();
+            }
+        }
+
+        function limparOutput() {
+            document.getElementById('output').textContent = 'Output limpo. Clique em "Executar Exploit" para ver os resultados...';
+        }
+
+        function pararExecucao() {
+            isRunning = false;
+            document.getElementById('executarBtn').disabled = false;
+            document.getElementById('pararBtn').disabled = true;
+            atualizarStatus('Execução parada', 'warning');
+        }
+
+        // Detecta quando o poc.js é carregado
+        window.addEventListener('load', function() {
+            print('[+] POC.js carregado com sucesso');
+            print('[+] Aguardando comando para executar...');
+        });
+
+        // Detecta erros no carregamento do poc.js
+        window.addEventListener('error', function(e) {
+            if (e.filename && e.filename.includes('poc.js')) {
+                print('[!] Erro ao carregar poc.js: ' + e.message);
+                atualizarStatus('Erro ao carregar POC', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
