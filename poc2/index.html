@@ -3,81 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PS5 WebKit Exploit Launcher</title>
+    <title>PS5 Modern WebKit Exploit (11.40)</title>
     <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            background: #000;
-            color: #0f0;
-            font-family: 'Courier New', monospace;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        h1 { font-size: 2.5em; margin-bottom: 30px; text-shadow: 0 0 10px #0f0; }
-        button {
-            padding: 20px 50px;
-            font-size: 24px;
-            background: #000;
-            color: #0f0;
-            border: 3px solid #0f0;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 0 20px #0f0;
-            transition: all 0.3s;
-        }
-        button:hover {
-            background: #0f0;
-            color: #000;
-            box-shadow: 0 0 40px #0f0;
-        }
-        #log {
-            margin-top: 40px;
-            width: 90%;
-            max-width: 900px;
-            height: 300px;
-            background: #111;
-            border: 1px solid #0f0;
-            padding: 15px;
-            overflow-y: auto;
-            font-size: 14px;
-            box-shadow: 0 0 15px #0f0 inset;
-        }
+        body { margin:0; height:100vh; background:#000; color:#0f0; font-family:'Courier New',monospace; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+        h1 { font-size:2.5em; margin-bottom:30px; text-shadow:0 0 10px #0f0; }
+        button { padding:20px 50px; font-size:24px; background:#000; color:#0f0; border:3px solid #0f0; border-radius:10px; cursor:pointer; box-shadow:0 0 20px #0f0; transition:all .3s; }
+        button:hover { background:#0f0; color:#000; box-shadow:0 0 40px #0f0; }
+        button:disabled { opacity:0.5; cursor:not-allowed; }
+        #log { margin-top:40px; width:90%; max-width:900px; height:350px; background:#111; border:1px solid #0f0; padding:15px; overflow-y:auto; font-size:14px; box-shadow:0 0 15px #0f0 inset; }
     </style>
 </head>
 <body>
 
-    <h1>PS5 WebKit Exploit</h1>
-    <button id="run">EXECUTAR EXPLOIT</button>
+    <h1>PS5 Modern WebKit Exploit</h1>
+    <button id="run">EXECUTAR EXPLOIT (11.40)</button>
 
-    <pre id="log">Pronto para execução...\nAguardando clique no botão...</pre>
+    <pre id="log">Carregando script.js...\nAguardando clique...</pre>
 
-    <!-- Seu exploit original (não mexi em NADA do código) -->
+    <!-- Seu script moderno (não precisa mudar nada nele) -->
     <script src="script.js"></script>
 
     <script>
-        // Função global de log para aparecer na tela
+        // Função global de log que o exploit usa
         window.log = function(msg) {
             const logDiv = document.getElementById("log");
             logDiv.textContent += msg + "\n";
             logDiv.scrollTop = logDiv.scrollHeight;
         };
 
-        document.getElementById("run").onclick = function() {
+        document.getElementById("run").onclick = async function() {
             this.disabled = true;
-            this.textContent = "EXECUTANDO...";
-            document.getElementById("log").textContent = "Iniciando exploit...\n";
+            this.textContent = "EXECUTANDO... AGUARDE";
+            document.getElementById("log").textContent = "Iniciando exploit moderno...\n";
 
-            // Remove qualquer execução automática anterior e roda manualmente
-            if (window.PS5Exploit && typeof window.PS5Exploit.start === "function") {
-                window.PS5Exploit.start();
-            } else {
-                // Caso o script.js tenha mudado de nome ou estrutura
-                alert("Exploit não foi carregado corretamente. Verifique o script.js");
+            try {
+                // Primeiro tenta a função manual
+                if (typeof window.startPS5Exploit === "function") {
+                    await window.startPS5Exploit();
+                }
+                // Se não existir, força criar a instância e rodar
+                else if (typeof PS5Exploit === "function") {
+                    const exploit = new PS5Exploit();
+                    await exploit.execute();
+                }
+                else {
+                    throw new Error("Nenhuma função de exploit encontrada!");
+                }
+
+                log("Exploit concluído! Veja os resultados acima.");
+            } catch(e) {
+                log("Erro crítico: " + e);
+                console.error(e);
+            } finally {
+                this.textContent = "EXECUTAR NOVAMENTE";
                 this.disabled = false;
-                this.textContent = "TENTAR NOVAMENTE";
             }
         };
     </script>
