@@ -1,1 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Arbitrary R/W POC</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 900px;
+        }
+        
+        #loadBtn {
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        
+        #loadBtn:hover {
+            background: #218838;
+        }
+        
+        #loadBtn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        #status {
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        #terminal {
+            width: 100%;
+            height: 400px;
+            background: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-y: auto;
+            text-align: left;
+            white-space: pre-wrap;
+            border: 1px solid #333;
+        }
+        
+        .terminal-line {
+            margin-bottom: 3px;
+            line-height: 1.3;
+        }
+        
+        .warning {
+            color: #ff6b6b;
+        }
+        
+        .success {
+            color: #4ecdc4;
+        }
+        
+        .info {
+            color: #45b7d1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Memory Arbitrary Read/Write POC</h2>
+        <button id="loadBtn" onclick="carregarPOC2()">Load Memory R/W Exploit</button>
+        <div id="status">Click to load poc2.js</div>
+        
+        <div id="terminal">
+[Memory R/W Terminal]
+> Ready to load arbitrary memory read/write exploit...
+> This POC abuses TypedArrays for memory manipulation
+        </div>
+    </div>
 
+    <script>
+        // Função para adicionar logs no terminal
+        function logTerminal(message, type = 'normal') {
+            const terminal = document.getElementById('terminal');
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            
+            if (type === 'warning') {
+                line.style.color = '#ff6b6b';
+            } else if (type === 'success') {
+                line.style.color = '#4ecdc4';
+            } else if (type === 'info') {
+                line.style.color = '#45b7d1';
+            }
+            
+            line.textContent = '> ' + message;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // Override das funções de console para capturar logs
+        const originalConsole = {
+            log: console.log,
+            warn: console.warn,
+            error: console.error
+        };
+
+        console.log = function(...args) {
+            originalConsole.log.apply(console, args);
+            logTerminal(args.join(' '), 'info');
+        };
+
+        console.warn = function(...args) {
+            originalConsole.warn.apply(console, args);
+            logTerminal('WARNING: ' + args.join(' '), 'warning');
+        };
+
+        console.error = function(...args) {
+            originalConsole.error.apply(console, args);
+            logTerminal('ERROR: ' + args.join(' '), 'warning');
+        };
+
+        // Função global 'log' para o POC
+        window.log = function(message) {
+            logTerminal(message, 'info');
+            originalConsole.log(message);
+        };
+
+        function carregarPOC2() {
+            const btn = document.getElementById('loadBtn');
+            const status = document.getElementById('status');
+            
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+            status.textContent = 'Loading memory R/W exploit...';
+            logTerminal('Starting memory arbitrary read/write exploit load...', 'info');
+            
+            // Carrega o arquivo poc2.js dinamicamente
+            const script = document.createElement('script');
+            script.src = 'poc2.js';
+            
+            script.onload = function() {
+                status.textContent = 'Memory R/W exploit loaded successfully!';
+                btn.textContent = 'Exploit Loaded';
+                logTerminal('poc2.js loaded successfully!', 'success');
+                logTerminal('Memory arbitrary read/write exploit is ready', 'success');
+                logTerminal('This POC abuses TypedArrays to achieve arbitrary memory access', 'info');
+                
+                // Captura erros durante a execução
+                window.addEventListener('error', function(e) {
+                    logTerminal(`Runtime ERROR: ${e.message}`, 'warning');
+                    logTerminal(`File: ${e.filename}:${e.lineno}`, 'warning');
+                    if (e.error && e.error.stack) {
+                        logTerminal(`Stack: ${e.error.stack}`, 'warning');
+                    }
+                });
+            };
+            
+            script.onerror = function() {
+                status.textContent = 'Error: Could not load poc2.js';
+                btn.textContent = 'Load Failed';
+                logTerminal('ERROR: Failed to load poc2.js', 'warning');
+                logTerminal('Make sure poc2.js exists in the same directory', 'warning');
+            };
+            
+            document.head.appendChild(script);
+        }
+
+        // Log inicial
+        logTerminal('Memory R/W System initialized', 'info');
+        logTerminal('This exploit demonstrates arbitrary memory read/write', 'info');
+        logTerminal('by abusing TypedArrays and stack pointer manipulation', 'info');
+        logTerminal('Waiting for exploit load command...', 'info');
+        
+        // Previne que o usuário saia acidentalmente durante a execução
+        window.addEventListener('beforeunload', function(e) {
+            if (document.getElementById('loadBtn').disabled) {
+                e.preventDefault();
+                e.returnValue = 'The exploit is still running. Are you sure you want to leave?';
+            }
+        });
+    </script>
+</body>
+</html>
