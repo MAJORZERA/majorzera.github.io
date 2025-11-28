@@ -1,113 +1,55 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PS5 Final Exploit</title>
+    <title>Executar JavaScript com Botão</title>
     <style>
         body {
-            margin: 0;
-            padding: 20px;
             font-family: Arial, sans-serif;
-            background: white;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
         }
-        
-        #loadBtn {
-            padding: 20px 40px;
-            font-size: 20px;
-            background: #28a745;
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            margin-bottom: 20px;
+            transition: background-color 0.3s;
         }
-        
-        #loadBtn:hover {
-            background: #218838;
-        }
-        
-        #loadBtn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-        
-        #terminal {
-            width: 100%;
-            max-width: 900px;
-            height: 500px;
-            background: black;
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            border: 2px solid #333;
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <button id="loadBtn" onclick="carregarExploit()">🚀 Execute Final Exploit</button>
-    
-    <div id="terminal">
-[PS5 Final Exploit - Atomics + BigInt]
-> Ready for final exploitation...
-> Target: WebKit JIT Compiler
-> Method: Type Confusion + Memory Corruption
-    </div>
 
+    <button id="meuBotao">Executar Script</button>
+
+    <!-- Carrega o arquivo JavaScript externo -->
+    <script src="script.js"></script>
+
+    <!-- Ou, se preferir, pode colocar o código diretamente aqui -->
     <script>
-        function carregarExploit() {
-            const btn = document.getElementById('loadBtn');
-            const terminal = document.getElementById('terminal');
-            
-            btn.disabled = true;
-            btn.textContent = 'Executing...';
-            
-            terminal.textContent = '[PS5 Final Exploit]\n> Loading exploit_ps5_final.js...';
-            
-            const originalLog = console.log;
-            console.log = function(...args) {
-                originalLog.apply(console, args);
-                const message = args.join(' ');
-                terminal.textContent += '\n> ' + message;
-                terminal.scrollTop = terminal.scrollHeight;
-            };
-            
-            const originalError = console.error;
-            console.error = function(...args) {
-                originalError.apply(console, args);
-                const message = args.join(' ');
-                terminal.textContent += '\n> [ERROR] ' + message;
-                terminal.scrollTop = terminal.scrollHeight;
-            };
-            
-            window.log = function(message) {
-                console.log(message);
-            };
-            
-            const script = document.createElement('script');
-            script.src = 'exploit_ps5_final.js';
-            
-            script.onload = function() {
-                btn.textContent = 'Exploit Complete';
-                console.log('✅ Final exploit loaded!');
-                console.log('🎯 Beginning full exploitation...');
-            };
-            
-            script.onerror = function() {
-                btn.textContent = 'Load Failed';
-                terminal.textContent += '\n> ❌ ERROR: Failed to load exploit_ps5_final.js';
-            };
-            
-            document.head.appendChild(script);
-        }
+        // Aguarda o DOM carregar completamente
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("meuBotao").addEventListener("click", function() {
+                // Chama a função que está no script.js
+                if (typeof executar === "function") {
+                    executar();
+                } else {
+                    alert("A função 'executar()' não foi encontrada no script.js");
+                }
+            });
+        });
     </script>
+
 </body>
 </html>
