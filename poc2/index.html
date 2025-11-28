@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memory Arbitrary R/W POC</title>
+    <title>PS5 WebKit Exploit Test</title>
     <style>
         body {
             margin: 0;
@@ -25,7 +25,7 @@
         #loadBtn {
             padding: 15px 30px;
             font-size: 18px;
-            background: #28a745;
+            background: #007bff;
             color: white;
             border: none;
             border-radius: 5px;
@@ -34,7 +34,7 @@
         }
         
         #loadBtn:hover {
-            background: #218838;
+            background: #0056b3;
         }
         
         #loadBtn:disabled {
@@ -46,26 +46,27 @@
             margin-bottom: 20px;
             font-size: 14px;
             color: #333;
+            font-weight: bold;
         }
         
         #terminal {
             width: 100%;
-            height: 400px;
+            height: 500px;
             background: #1e1e1e;
             color: #00ff00;
             font-family: 'Courier New', monospace;
-            font-size: 13px;
+            font-size: 12px;
             padding: 15px;
             border-radius: 5px;
             overflow-y: auto;
             text-align: left;
             white-space: pre-wrap;
             border: 1px solid #333;
+            line-height: 1.4;
         }
         
         .terminal-line {
-            margin-bottom: 3px;
-            line-height: 1.3;
+            margin-bottom: 2px;
         }
         
         .warning {
@@ -79,18 +80,44 @@
         .info {
             color: #45b7d1;
         }
+        
+        .critical {
+            color: #ff0000;
+            font-weight: bold;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Memory Arbitrary Read/Write POC</h2>
-        <button id="loadBtn" onclick="carregarPOC2()">Load Memory R/W Exploit</button>
-        <div id="status">Click to load poc2.js</div>
+        <h1>🔍 PS5 WebKit Exploit Tester</h1>
+        <p>Teste de vulnerabilidades WebKit para PlayStation 5</p>
+        
+        <button id="loadBtn" onclick="carregarPOC()">Start PS5 Exploit Test</button>
+        <div id="status">Ready to test WebKit vulnerabilities...</div>
+        
+        <div class="summary" id="summary" style="display: none;">
+            <h3>📊 Test Summary</h3>
+            <div id="summaryContent"></div>
+        </div>
         
         <div id="terminal">
-[Memory R/W Terminal]
-> Ready to load arbitrary memory read/write exploit...
-> This POC abuses TypedArrays for memory manipulation
+[PS5 WebKit Exploit Tester v1.0]
+> System initialized
+> Target: PlayStation 5 WebKit Browser
+> Ready to commence vulnerability analysis...
         </div>
     </div>
 
@@ -107,9 +134,14 @@
                 line.style.color = '#4ecdc4';
             } else if (type === 'info') {
                 line.style.color = '#45b7d1';
+            } else if (type === 'critical') {
+                line.style.color = '#ff0000';
+                line.style.fontWeight = 'bold';
             }
             
-            line.textContent = '> ' + message;
+            // Adiciona timestamp
+            const timestamp = new Date().toLocaleTimeString();
+            line.textContent = `[${timestamp}] ${message}`;
             terminal.appendChild(line);
             terminal.scrollTop = terminal.scrollHeight;
         }
@@ -133,7 +165,7 @@
 
         console.error = function(...args) {
             originalConsole.error.apply(console, args);
-            logTerminal('ERROR: ' + args.join(' '), 'warning');
+            logTerminal('ERROR: ' + args.join(' '), 'critical');
         };
 
         // Função global 'log' para o POC
@@ -142,59 +174,128 @@
             originalConsole.log(message);
         };
 
-        function carregarPOC2() {
+        // Função para atualizar o sumário
+        function updateSummary(content) {
+            const summary = document.getElementById('summary');
+            const summaryContent = document.getElementById('summaryContent');
+            summary.style.display = 'block';
+            summaryContent.innerHTML = content;
+        }
+
+        function carregarPOC() {
             const btn = document.getElementById('loadBtn');
             const status = document.getElementById('status');
             
             btn.disabled = true;
-            btn.textContent = 'Loading...';
-            status.textContent = 'Loading memory R/W exploit...';
-            logTerminal('Starting memory arbitrary read/write exploit load...', 'info');
+            btn.textContent = 'Testing...';
+            status.textContent = 'Running PS5 WebKit vulnerability tests...';
+            status.style.color = '#007bff';
             
-            // Carrega o arquivo poc2.js dinamicamente
+            logTerminal('🚀 Starting PS5 WebKit Exploit Analysis...', 'info');
+            logTerminal('🔧 Loading exploit modules...', 'info');
+            
+            // Carrega o arquivo poc_ps5.js dinamicamente
             const script = document.createElement('script');
-            script.src = 'poc2.js';
+            script.src = 'poc_ps5.js';
             
             script.onload = function() {
-                status.textContent = 'Memory R/W exploit loaded successfully!';
-                btn.textContent = 'Exploit Loaded';
-                logTerminal('poc2.js loaded successfully!', 'success');
-                logTerminal('Memory arbitrary read/write exploit is ready', 'success');
-                logTerminal('This POC abuses TypedArrays to achieve arbitrary memory access', 'info');
+                status.textContent = 'Exploit tests completed!';
+                status.style.color = '#28a745';
+                btn.textContent = 'Tests Complete';
+                logTerminal('✅ All exploit tests loaded successfully!', 'success');
+                logTerminal('📋 Beginning vulnerability assessment...', 'info');
+                
+                // Inicia os testes após um breve delay
+                setTimeout(() => {
+                    try {
+                        if (typeof runExploitTests === 'function') {
+                            let results = runExploitTests();
+                            
+                            // Atualiza o sumário com os resultados
+                            let summaryHTML = '';
+                            if (results) {
+                                summaryHTML = `
+                                    <div style="color: #dc3545; font-weight: bold;">
+                                        ⚠️ VULNERABILITIES DETECTED!
+                                    </div>
+                                    <p>This WebKit version may be exploitable.</p>
+                                    <p>Proceed with caution and further testing.</p>
+                                `;
+                            } else {
+                                summaryHTML = `
+                                    <div style="color: #28a745; font-weight: bold;">
+                                        ✅ No obvious vulnerabilities detected
+                                    </div>
+                                    <p>WebKit version appears to be patched or secure.</p>
+                                `;
+                            }
+                            updateSummary(summaryHTML);
+                            
+                        } else {
+                            logTerminal('❌ Function runExploitTests not found in POC', 'critical');
+                        }
+                    } catch (error) {
+                        logTerminal('❌ Error executing exploit tests: ' + error, 'critical');
+                    }
+                }, 1000);
                 
                 // Captura erros durante a execução
                 window.addEventListener('error', function(e) {
-                    logTerminal(`Runtime ERROR: ${e.message}`, 'warning');
-                    logTerminal(`File: ${e.filename}:${e.lineno}`, 'warning');
-                    if (e.error && e.error.stack) {
-                        logTerminal(`Stack: ${e.error.stack}`, 'warning');
-                    }
+                    logTerminal(`💥 Runtime Error: ${e.message}`, 'critical');
+                    logTerminal(`📄 File: ${e.filename}:${e.lineno}`, 'warning');
                 });
             };
             
             script.onerror = function() {
-                status.textContent = 'Error: Could not load poc2.js';
+                status.textContent = 'Error: Could not load poc_ps5.js';
+                status.style.color = '#dc3545';
                 btn.textContent = 'Load Failed';
-                logTerminal('ERROR: Failed to load poc2.js', 'warning');
-                logTerminal('Make sure poc2.js exists in the same directory', 'warning');
+                logTerminal('❌ ERROR: Failed to load poc_ps5.js', 'critical');
+                logTerminal('🔍 Make sure poc_ps5.js exists in the same directory', 'warning');
             };
             
             document.head.appendChild(script);
         }
 
-        // Log inicial
-        logTerminal('Memory R/W System initialized', 'info');
-        logTerminal('This exploit demonstrates arbitrary memory read/write', 'info');
-        logTerminal('by abusing TypedArrays and stack pointer manipulation', 'info');
-        logTerminal('Waiting for exploit load command...', 'info');
+        // Log inicial com informações do sistema
+        logTerminal('🔍 PS5 WebKit Exploit Tester Initialized', 'info');
+        logTerminal('🌐 User Agent: ' + navigator.userAgent, 'info');
+        logTerminal('💻 Platform: ' + navigator.platform, 'info');
+        logTerminal('🏢 Vendor: ' + navigator.vendor, 'info');
+        logTerminal('📱 Touch Points: ' + (navigator.maxTouchPoints || 'N/A'), 'info');
+        logTerminal('----------------------------------------', 'info');
         
+        // Detecta recursos disponíveis
+        try {
+            if (window.WebAssembly) {
+                logTerminal('✅ WebAssembly supported', 'success');
+            }
+            if (window.SharedArrayBuffer) {
+                logTerminal('✅ SharedArrayBuffer supported', 'success');
+            }
+            if (window.Atomics) {
+                logTerminal('✅ Atomics supported', 'success');
+            }
+        } catch (e) {
+            logTerminal('⚠️ Some features not available: ' + e.message, 'warning');
+        }
+
         // Previne que o usuário saia acidentalmente durante a execução
         window.addEventListener('beforeunload', function(e) {
-            if (document.getElementById('loadBtn').disabled) {
+            if (document.getElementById('loadBtn').disabled && 
+                document.getElementById('loadBtn').textContent !== 'Tests Complete') {
                 e.preventDefault();
-                e.returnValue = 'The exploit is still running. Are you sure you want to leave?';
+                e.returnValue = 'The exploit tests are still running. Are you sure you want to leave?';
             }
         });
+
+        // Adiciona informações de ajuda
+        logTerminal('💡 Instructions:', 'info');
+        logTerminal('1. Click "Start PS5 Exploit Test" to begin', 'info');
+        logTerminal('2. Monitor the terminal for vulnerability detection', 'info');
+        logTerminal('3. Check the summary for overall results', 'info');
+        logTerminal('4. Look for "VULNERABLE" indicators in red', 'info');
+        logTerminal('----------------------------------------', 'info');
     </script>
 </body>
 </html>
