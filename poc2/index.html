@@ -3,42 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Botão que Roda o JS</title>
+    <title>PS5 WebKit Exploit Launcher</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            margin: 0;
+            height: 100vh;
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: #f0f0f0;
         }
+        h1 { font-size: 2.5em; margin-bottom: 30px; text-shadow: 0 0 10px #0f0; }
         button {
-            padding: 15px 32px;
-            font-size: 18px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 8px;
+            padding: 20px 50px;
+            font-size: 24px;
+            background: #000;
+            color: #0f0;
+            border: 3px solid #0f0;
+            border-radius: 10px;
             cursor: pointer;
+            box-shadow: 0 0 20px #0f0;
+            transition: all 0.3s;
         }
-        button:hover { background: #218838; }
+        button:hover {
+            background: #0f0;
+            color: #000;
+            box-shadow: 0 0 40px #0f0;
+        }
+        #log {
+            margin-top: 40px;
+            width: 90%;
+            max-width: 900px;
+            height: 300px;
+            background: #111;
+            border: 1px solid #0f0;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 14px;
+            box-shadow: 0 0 15px #0f0 inset;
+        }
     </style>
 </head>
 <body>
 
-    <button id="rodar">Executar script.js</button>
+    <h1>PS5 WebKit Exploit</h1>
+    <button id="run">EXECUTAR EXPLOIT</button>
 
-    <!-- Seu código JavaScript externo -->
+    <pre id="log">Pronto para execução...\nAguardando clique no botão...</pre>
+
+    <!-- Seu exploit original (não mexi em NADA do código) -->
     <script src="script.js"></script>
 
     <script>
-        document.getElementById("rodar").onclick = function() {
-            // Recarrega e executa novamente o script.js
-            const script = document.createElement("script");
-            script.src = "script.js?t=" + Date.now(); // ?t= evita cache
-            document.body.appendChild(script);
+        // Função global de log para aparecer na tela
+        window.log = function(msg) {
+            const logDiv = document.getElementById("log");
+            logDiv.textContent += msg + "\n";
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+
+        document.getElementById("run").onclick = function() {
+            this.disabled = true;
+            this.textContent = "EXECUTANDO...";
+            document.getElementById("log").textContent = "Iniciando exploit...\n";
+
+            // Remove qualquer execução automática anterior e roda manualmente
+            if (window.PS5Exploit && typeof window.PS5Exploit.start === "function") {
+                window.PS5Exploit.start();
+            } else {
+                // Caso o script.js tenha mudado de nome ou estrutura
+                alert("Exploit não foi carregado corretamente. Verifique o script.js");
+                this.disabled = false;
+                this.textContent = "TENTAR NOVAMENTE";
+            }
         };
     </script>
 
