@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Executar JavaScript com Botão</title>
+    <title>Botão que Roda o JS</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,38 +12,34 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background: #f0f0f0;
         }
         button {
-            padding: 15px 30px;
+            padding: 15px 32px;
             font-size: 18px;
-            background-color: #007bff;
+            background: #28a745;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s;
         }
-        button:hover {
-            background-color: #0056b3;
-        }
+        button:hover { background: #218838; }
     </style>
 </head>
 <body>
 
-    <button id="meuBotao">Executar Script</button>
+    <button id="rodar">Executar script.js</button>
 
-    <!-- Carrega o arquivo JavaScript externo -->
-    <script src="poc.js"></script>
+    <!-- Seu código JavaScript externo -->
+    <script src="script.js"></script>
 
-    <!-- Ou, se preferir, pode colocar o código diretamente aqui -->
     <script>
-        // Aguarda o DOM carregar completamente
-        document.addEventListener("DOMContentLoaded", function() {
-            document.getElementById("meuBotao").addEventListener("click", function() {
-                }
-            });
-        });
+        document.getElementById("rodar").onclick = function() {
+            // Recarrega e executa novamente o script.js
+            const script = document.createElement("script");
+            script.src = "script.js?t=" + Date.now(); // ?t= evita cache
+            document.body.appendChild(script);
+        };
     </script>
 
 </body>
