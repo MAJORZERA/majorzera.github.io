@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PS5 Atomics Exploit</title>
+    <title>PS5 Final Exploit</title>
     <style>
         body {
             margin: 0;
@@ -19,7 +19,7 @@
         #loadBtn {
             padding: 20px 40px;
             font-size: 20px;
-            background: #007bff;
+            background: #28a745;
             color: white;
             border: none;
             border-radius: 5px;
@@ -28,7 +28,7 @@
         }
         
         #loadBtn:hover {
-            background: #0056b3;
+            background: #218838;
         }
         
         #loadBtn:disabled {
@@ -53,13 +53,13 @@
     </style>
 </head>
 <body>
-    <button id="loadBtn" onclick="carregarExploit()">Load Atomics Exploit</button>
+    <button id="loadBtn" onclick="carregarExploit()">🚀 Execute Final Exploit</button>
     
     <div id="terminal">
-[PS5 Atomics Exploit]
-> Ready to load exploit...
-> Features: Atomics + BigInt available
+[PS5 Final Exploit - Atomics + BigInt]
+> Ready for final exploitation...
 > Target: WebKit JIT Compiler
+> Method: Type Confusion + Memory Corruption
     </div>
 
     <script>
@@ -68,12 +68,10 @@
             const terminal = document.getElementById('terminal');
             
             btn.disabled = true;
-            btn.textContent = 'Loading...';
+            btn.textContent = 'Executing...';
             
-            // Clear terminal and add loading message
-            terminal.textContent = '[PS5 Atomics Exploit]\n> Loading exploit_ps5_atomics.js...';
+            terminal.textContent = '[PS5 Final Exploit]\n> Loading exploit_ps5_final.js...';
             
-            // Override console.log to show in terminal
             const originalLog = console.log;
             console.log = function(...args) {
                 originalLog.apply(console, args);
@@ -82,7 +80,6 @@
                 terminal.scrollTop = terminal.scrollHeight;
             };
             
-            // Override console.error
             const originalError = console.error;
             console.error = function(...args) {
                 originalError.apply(console, args);
@@ -91,25 +88,22 @@
                 terminal.scrollTop = terminal.scrollHeight;
             };
             
-            // Create global log function for the exploit
             window.log = function(message) {
                 console.log(message);
             };
             
-            // Load the exploit script
             const script = document.createElement('script');
-            script.src = 'exploit_ps5_atomics.js';
+            script.src = 'exploit_ps5_final.js';
             
             script.onload = function() {
-                btn.textContent = 'Exploit Loaded';
-                console.log('✅ exploit_ps5_atomics.js loaded successfully!');
-                console.log('🚀 Starting Atomics exploitation...');
+                btn.textContent = 'Exploit Complete';
+                console.log('✅ Final exploit loaded!');
+                console.log('🎯 Beginning full exploitation...');
             };
             
             script.onerror = function() {
                 btn.textContent = 'Load Failed';
-                terminal.textContent += '\n> ❌ ERROR: Failed to load exploit_ps5_atomics.js';
-                terminal.textContent += '\n> Make sure the file exists in the same directory';
+                terminal.textContent += '\n> ❌ ERROR: Failed to load exploit_ps5_final.js';
             };
             
             document.head.appendChild(script);
