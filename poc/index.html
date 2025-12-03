@@ -1,892 +1,179 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise WebAssembly PS5 - WebKit Source</title>
+    <title>Teste POC PS5 WebKit</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            background-color: #f5f5f5;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px;
-            line-height: 1.6;
-            color: #333;
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f5f5f5;
         }
-        
         .container {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
             background: white;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
             border-radius: 10px;
-            margin-bottom: 30px;
-            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        .discovery-card {
-            background: #e8f4fd;
-            border: 3px solid #2196F3;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 25px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .discovery-card::before {
-            content: "🎯";
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 40px;
-            opacity: 0.2;
-        }
-        
-        .discovery-card h2 {
-            color: #0d47a1;
-            margin-bottom: 15px;
-            font-size: 1.8em;
-        }
-        
-        .section {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 25px;
-            transition: transform 0.3s;
-        }
-        
-        .section:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        
-        .section h2 {
+        h1 {
             color: #333;
-            margin-bottom: 20px;
+            border-bottom: 2px solid #4CAF50;
             padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
-            font-size: 1.6em;
         }
-        
-        .findings-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }
-        
-        .finding {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            border-left: 5px solid #4CAF50;
-        }
-        
-        .finding.warning {
-            border-left-color: #FF9800;
-            background: #fff8e1;
-        }
-        
-        .finding.danger {
-            border-left-color: #f44336;
-            background: #ffebee;
-        }
-        
-        .code-block {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 20px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 20px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-        }
-        
-        .file-tree {
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+        .info-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4CAF50;
             padding: 15px;
-            font-family: 'Courier New', monospace;
-            margin: 15px 0;
-        }
-        
-        .button-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
             margin: 20px 0;
+            border-radius: 0 5px 5px 0;
         }
-        
-        button {
-            padding: 14px 28px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        button i {
-            font-size: 18px;
-        }
-        
-        .btn-primary {
-            background: #2196F3;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #0b7dda;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
-        }
-        
-        .btn-success {
-            background: #4CAF50;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #388e3c;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-        }
-        
-        .btn-warning {
-            background: #FF9800;
-            color: white;
-        }
-        
-        .btn-warning:hover {
-            background: #f57c00;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
-        }
-        
-        .btn-danger {
-            background: #f44336;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #d32f2f;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
-        }
-        
-        .output-panel {
-            background: #f8f9fa;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
             font-family: 'Courier New', monospace;
-            font-size: 14px;
+        }
+        #output {
+            background: #2d2d2d;
+            color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
             min-height: 200px;
             max-height: 500px;
             overflow-y: auto;
             white-space: pre-wrap;
         }
-        
-        .info-box {
-            background: #e3f2fd;
-            border-left: 5px solid #2196F3;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .warning-box {
-            background: #fff3e0;
-            border-left: 5px solid #FF9800;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .status-bar {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            font-weight: bold;
-            display: none;
-            z-index: 1000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        
-        .status-success {
-            background: #4CAF50;
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            background: #2196F3;
             color: white;
-        }
-        
-        .status-error {
-            background: #f44336;
-            color: white;
-        }
-        
-        .status-warning {
-            background: #FF9800;
-            color: white;
-        }
-        
-        .tab-container {
-            margin: 25px 0;
-        }
-        
-        .tabs {
-            display: flex;
-            border-bottom: 2px solid #dee2e6;
-            margin-bottom: 0;
-        }
-        
-        .tab {
-            padding: 15px 25px;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
-            border: 2px solid transparent;
-            border-bottom: none;
-            margin-bottom: -2px;
-            font-weight: bold;
-            color: #666;
-            transition: all 0.3s;
-        }
-        
-        .tab:hover {
-            color: #2196F3;
-        }
-        
-        .tab.active {
-            color: #2196F3;
-            border-color: #2196F3;
-            background: white;
-            border-radius: 8px 8px 0 0;
-        }
-        
-        .tab-content {
-            display: none;
-            padding: 25px;
-            border: 2px solid #dee2e6;
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            background: white;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .repo-link {
-            display: inline-block;
-            background: #333;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
             margin: 10px 0;
-            transition: background 0.3s;
         }
-        
-        .repo-link:hover {
-            background: #555;
+        button:hover {
+            background: #0b7dda;
         }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .header h1 {
-                font-size: 1.8em;
-            }
-            
-            .button-group {
-                flex-direction: column;
-            }
-            
-            button {
-                width: 100%;
-            }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1><i class="fas fa-search"></i> Análise WebAssembly PS5</h1>
-            <p>WebKit Source Code - Firmware 11.00 a 11.60</p>
+        <h1>🔓 Teste de Exploit WebAssembly - PS5 WebKit</h1>
+        
+        <div class="info-box">
+            <h3>⚠️ Informações Importantes:</h3>
+            <p>Este teste é baseado na análise do código-fonte do WebKit do PS5 (fw 11.00-11.60).</p>
+            <p>O exploit visa uma vulnerabilidade de <strong>use-after-free</strong> em <code>WasmTypeDefinition</code>.</p>
         </div>
         
-        <div class="discovery-card">
-            <h2><i class="fas fa-check-circle"></i> DESCOBERTA DEFINITIVA: WebAssembly COMPLETO no PS5!</h2>
-            <p>Analisando o código-fonte do WebKit do PS5, confirmamos que WebAssembly está totalmente implementado.</p>
-            
-            <a href="https://github.com/dantsco/ps5-webkit-open-source-mirror/tree/main/Source/JavaScriptCore/wasm" 
-               class="repo-link" target="_blank">
-               <i class="fab fa-github"></i> Ver Repositório WebAssembly PS5
-            </a>
+        <div id="status">
+            <p>Carregando POC adaptado para PS5...</p>
         </div>
         
-        <div class="tab-container">
-            <div class="tabs">
-                <div class="tab active" onclick="showTab('analysis')">Análise</div>
-                <div class="tab" onclick="showTab('testing')">Testes</div>
-                <div class="tab" onclick="showTab('exploit')">Exploit</div>
-                <div class="tab" onclick="showTab('source')">Código-fonte</div>
-            </div>
-            
-            <div id="analysis-tab" class="tab-content active">
-                <h2><i class="fas fa-code"></i> Análise do Código-fonte</h2>
-                
-                <div class="info-box">
-                    <h3><i class="fas fa-folder-open"></i> Estrutura do WebAssembly no PS5:</h3>
-                    <div class="file-tree">
-Source/JavaScriptCore/wasm/
-├── WasmModuleBuilder.h          ← ✅ Classe usada pelo exploit
-├── WasmModuleBuilder.cpp
-├── WasmTypeDefinition.h         ← ✅ Tipos WASM (alvo do exploit)
-├── WasmTypeDefinition.cpp
-├── WasmTypeDefinitionCache.h
-├── WasmCallingConvention.h
-├── WasmCallee.h
-├── WasmBinding.h
-├── WasmBBQPlan.h
-├── WasmOMGPlan.h
-├── ... (100+ arquivos)
-                    </div>
-                </div>
-                
-                <div class="findings-grid">
-                    <div class="finding">
-                        <h3><i class="fas fa-check"></i> WasmModuleBuilder Existe</h3>
-                        <p>A classe <code>WasmModuleBuilder</code> está implementada e é a mesma usada pelo exploit POC.js.</p>
-                    </div>
-                    
-                    <div class="finding">
-                        <h3><i class="fas fa-check"></i> GC Types Suportados</h3>
-                        <p>Encontrei métodos para estruturas e arrays: <code>addStruct()</code> e <code>addArray()</code>.</p>
-                    </div>
-                    
-                    <div class="finding warning">
-                        <h3><i class="fas fa-exclamation-triangle"></i> Possível Vulnerabilidade</h3>
-                        <p>O exploit se foca em <code>WasmTypeDefinition</code> - a estrutura de tipos que pode ter use-after-free.</p>
-                    </div>
-                    
-                    <div class="finding">
-                        <h3><i class="fas fa-check"></i> WebAssembly Completo</h3>
-                        <p>Implementação completa com mais de 100 arquivos - todas features necessárias estão presentes.</p>
-                    </div>
-                </div>
-                
-                <div class="code-block">
-// Trecho de WasmModuleBuilder.h - PS5 WebKit
-class WasmModuleBuilder {
-public:
-    // ... métodos de construção
-    
-    // ✅ Métodos para criar tipos GC
-    size_t addStruct(const Vector&lt;FieldType&gt;& fields);
-    size_t addArray(FieldType elementType, bool isMutable);
-    
-    // ✅ Métodos para adicionar globais
-    void addGlobal(GlobalInformation, ExpressionType initialValue);
-    
-    // ✅ Build final do módulo
-    Ref&lt;Wasm::Module&gt; build() const;
-    
-    // ... mais métodos
-};
-                </div>
-            </div>
-            
-            <div id="testing-tab" class="tab-content">
-                <h2><i class="fas fa-vial"></i> Testes Práticos</h2>
-                
-                <div class="warning-box">
-                    <h3><i class="fas fa-exclamation-circle"></i> Importante</h3>
-                    <p>O POC.js original foi feito para JavaScriptCore (JSC shell). No PS5 WebKit, as APIs podem estar em escopos diferentes.</p>
-                </div>
-                
-                <div class="button-group">
-                    <button class="btn-primary" onclick="testWasmAvailability()">
-                        <i class="fas fa-search"></i> Testar WebAssembly
-                    </button>
-                    <button class="btn-success" onclick="testModuleBuilder()">
-                        <i class="fas fa-cube"></i> Testar ModuleBuilder
-                    </button>
-                    <button class="btn-warning" onclick="testGCTypes()">
-                        <i class="fas fa-project-diagram"></i> Testar GC Types
-                    </button>
-                    <button class="btn-danger" onclick="clearAllOutputs()">
-                        <i class="fas fa-trash"></i> Limpar Tudo
-                    </button>
-                </div>
-                
-                <div class="output-panel" id="testOutput">
-                    Clique nos botões para executar testes...
-                </div>
-                
-                <div class="info-box">
-                    <h3><i class="fas fa-lightbulb"></i> Dica de Teste</h3>
-                    <p>No PS5, tente acessar as APIs WebAssembly através do console JavaScript. O POC pode funcionar com adaptações para o escopo correto.</p>
-                </div>
-            </div>
-            
-            <div id="exploit-tab" class="tab-content">
-                <h2><i class="fas fa-bug"></i> Análise do Exploit POC.js</h2>
-                
-                <div class="warning-box">
-                    <h3><i class="fas fa-skull-crossbones"></i> Vulnerabilidade Alvo</h3>
-                    <p>O exploit visa uma vulnerabilidade de <strong>use-after-free</strong> em <code>WasmTypeDefinition</code>.</p>
-                </div>
-                
-                <div class="code-block">
-// Estrutura do exploit (simplificada):
-// 1. Criar módulo WASM com tipos específicos
-let builder1 = new WasmModuleBuilder();
-let typeIndex = builder1.addStruct([...]);
-
-// 2. Criar globais que referenciam os tipos
-builder1.addGlobal(wasmRefNullType(typeIndex), true, false, initExpr);
-
-// 3. Liberar módulo mas manter referências aos tipos
-instance1 = null;
-gc();  // Forçar garbage collection
-
-// 4. Criar novo módulo com tipos diferentes no mesmo espaço de memória
-let builder2 = new WasmModuleBuilder();
-// ... criar muitos tipos diferentes
-
-// 5. Se sobreposição ocorrer: TYPE CONFUSION!
-// Isso permite acesso a memória não autorizada
-                </div>
-                
-                <div class="findings-grid">
-                    <div class="finding">
-                        <h3><i class="fas fa-check"></i> Componentes Presentes</h3>
-                        <p>Todos os componentes do exploit existem no PS5: WasmModuleBuilder, TypeDefinition, GC types.</p>
-                    </div>
-                    
-                    <div class="finding warning">
-                        <h3><i class="fas fa-question-circle"></i> API Diferente</h3>
-                        <p>No navegador PS5, a API pode estar em escopo diferente ou com nomes diferentes.</p>
-                    </div>
-                    
-                    <div class="finding">
-                        <h3><i class="fas fa-bolt"></i> Vulnerabilidade Possível</h3>
-                        <p>Se a mesma implementação de TypeDefinition existir, a vulnerabilidade pode estar presente.</p>
-                    </div>
-                </div>
-                
-                <button class="btn-warning" onclick="runExploitAnalysis()" style="margin-top: 20px;">
-                    <i class="fas fa-play"></i> Analisar Compatibilidade do Exploit
-                </button>
-                
-                <div class="output-panel" id="exploitOutput" style="margin-top: 20px;">
-                    Resultado da análise aparecerá aqui...
-                </div>
-            </div>
-            
-            <div id="source-tab" class="tab-content">
-                <h2><i class="fas fa-file-code"></i> Links do Código-fonte</h2>
-                
-                <div class="info-box">
-                    <h3><i class="fab fa-github"></i> Links Diretos para Análise:</h3>
-                    <ul style="list-style: none; padding: 0;">
-                        <li style="margin: 10px 0;">
-                            <a href="https://github.com/dantsco/ps5-webkit-open-source-mirror/blob/main/Source/JavaScriptCore/wasm/WasmModuleBuilder.h" 
-                               target="_blank" class="repo-link">
-                               <i class="fas fa-external-link-alt"></i> WasmModuleBuilder.h
-                            </a>
-                        </li>
-                        <li style="margin: 10px 0;">
-                            <a href="https://github.com/dantsco/ps5-webkit-open-source-mirror/blob/main/Source/JavaScriptCore/wasm/WasmTypeDefinition.h" 
-                               target="_blank" class="repo-link">
-                               <i class="fas fa-external-link-alt"></i> WasmTypeDefinition.h
-                            </a>
-                        </li>
-                        <li style="margin: 10px 0;">
-                            <a href="https://github.com/dantsco/ps5-webkit-open-source-mirror/tree/main/Source/JavaScriptCore" 
-                               target="_blank" class="repo-link">
-                               <i class="fas fa-external-link-alt"></i> Pasta JavaScriptCore
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                
-                <div class="warning-box">
-                    <h3><i class="fas fa-code-branch"></i> Importante para Desenvolvedores</h3>
-                    <p>Para fazer o exploit funcionar no PS5, você precisa:</p>
-                    <ol>
-                        <li>Encontrar como acessar <code>WasmModuleBuilder</code> no contexto do navegador</li>
-                        <li>Adaptar as chamadas de API para o escopo correto</li>
-                        <li>Testar se o garbage collector se comporta da mesma forma</li>
-                        <li>Verificar se a vulnerabilidade específica ainda existe nesta versão</li>
-                    </ol>
-                </div>
-            </div>
+        <button id="runBtn">Executar Teste POC</button>
+        <button id="detectBtn" style="background: #FF9800;">Detectar Ambiente</button>
+        
+        <div id="output"></div>
+        
+        <div class="info-box">
+            <h3>📋 Próximos Passos se Funcionar:</h3>
+            <ol>
+                <li>Verificar se ocorre type confusion</li>
+                <li>Explorar corrupção de memória</li>
+                <li>Desenvolver primitivas de leitura/escrita</li>
+                <li>Executar código arbitrário</li>
+            </ol>
         </div>
     </div>
-    
-    <div id="statusBar" class="status-bar"></div>
 
     <script>
-        // Elementos
-        const testOutput = document.getElementById('testOutput');
-        const exploitOutput = document.getElementById('exploitOutput');
-        const statusBar = document.getElementById('statusBar');
+        // Capturar logs
+        const output = document.getElementById('output');
+        const originalLog = console.log;
+        const originalError = console.error;
         
-        // Sistema de tabs
-        function showTab(tabName) {
-            // Esconder todas
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Mostrar selecionada
-            document.getElementById(tabName + '-tab').classList.add('active');
-            event.target.classList.add('active');
-        }
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            output.textContent += '[LOG] ' + args.join(' ') + '\n';
+            output.scrollTop = output.scrollHeight;
+        };
         
-        // Utilitários
-        function logToPanel(text, panel = testOutput) {
-            panel.textContent += text + '\n';
-            panel.scrollTop = panel.scrollHeight;
-        }
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            output.textContent += '[ERRO] ' + args.join(' ') + '\n';
+            output.scrollTop = output.scrollHeight;
+        };
         
-        function clearPanel(panelId = null) {
-            if (panelId) {
-                document.getElementById(panelId).textContent = '';
-            } else {
-                testOutput.textContent = '';
-                exploitOutput.textContent = '';
-            }
-        }
+        // Carregar o POC adaptado
+        const script = document.createElement('script');
+        script.src = 'poc-ps5.js'; // Use o arquivo adaptado acima
+        script.onload = function() {
+            document.getElementById('status').innerHTML = 
+                '<p style="color: #4CAF50;">✅ POC adaptado carregado com sucesso!</p>' +
+                '<p>Clique em "Executar Teste POC" para iniciar.</p>';
+        };
         
-        function showStatus(message, type = 'success', duration = 3000) {
-            statusBar.textContent = message;
-            statusBar.className = `status-bar status-${type}`;
-            statusBar.style.display = 'block';
-            
-            setTimeout(() => {
-                statusBar.style.display = 'none';
-            }, duration);
-        }
+        script.onerror = function() {
+            document.getElementById('status').innerHTML = 
+                '<p style="color: #f44336;">❌ Erro ao carregar POC adaptado.</p>' +
+                '<p>Certifique-se de que poc-ps5.js está na mesma pasta.</p>';
+        };
         
-        // Testes
-        function testWasmAvailability() {
-            clearPanel('testOutput');
-            
-            logToPanel('=== TESTE DE WEBASSEMBLY ===');
-            logToPanel(`Data: ${new Date().toLocaleString()}`);
-            logToPanel('');
-            
-            // Teste básico
-            if (typeof WebAssembly === 'undefined') {
-                logToPanel('❌ WebAssembly não está disponível globalmente');
-                logToPanel('');
-                logToPanel('💡 No PS5, WebAssembly pode estar em escopo diferente.');
-                logToPanel('   Tente: window.WebAssembly ou WebAssembly global.');
-                showStatus('WebAssembly não encontrado', 'error');
-                return;
-            }
-            
-            logToPanel('✅ WebAssembly disponível!');
-            logToPanel(`   Tipo: ${typeof WebAssembly}`);
-            logToPanel('');
-            
-            // Listar propriedades
-            logToPanel('Propriedades do WebAssembly:');
-            const props = Object.getOwnPropertyNames(WebAssembly);
-            props.forEach(prop => {
-                logToPanel(`   • ${prop}: ${typeof WebAssembly[prop]}`);
-            });
-            
-            logToPanel('');
-            logToPanel('=== TESTE DE MÓDULO SIMPLES ===');
-            
-            try {
-                // Módulo WASM mínimo
-                const wasmBytes = new Uint8Array([
-                    0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
-                    0x01, 0x04, 0x01, 0x60, 0x00, 0x01, 0x7f,
-                    0x03, 0x02, 0x01, 0x00,
-                    0x07, 0x07, 0x01, 0x03, 0x6d, 0x61, 0x69, 0x6e, 0x00, 0x00,
-                    0x0a, 0x06, 0x01, 0x04, 0x00, 0x41, 0x2a, 0x0b
-                ]);
+        document.head.appendChild(script);
+        
+        // Botões
+        document.getElementById('runBtn').onclick = function() {
+            if (typeof runPS5Poc === 'function') {
+                this.disabled = true;
+                this.textContent = 'Executando...';
                 
-                const module = new WebAssembly.Module(wasmBytes);
-                logToPanel('✅ Módulo WebAssembly criado');
-                
-                const instance = new WebAssembly.Instance(module);
-                logToPanel('✅ Instância WebAssembly criada');
-                
-                if (instance.exports.main) {
-                    const result = instance.exports.main();
-                    logToPanel(`✅ Função executada: main() = ${result}`);
-                }
-                
-                showStatus('WebAssembly funcionando!', 'success');
-                
-            } catch (error) {
-                logToPanel(`❌ Erro: ${error.message}`);
-                logToPanel(`   Stack: ${error.stack}`);
-                showStatus('Erro no WebAssembly', 'error');
-            }
-        }
-        
-        function testModuleBuilder() {
-            clearPanel('testOutput');
-            
-            logToPanel('=== BUSCANDO WASMMODULEBUILDER ===');
-            logToPanel('');
-            
-            // Tentar encontrar WasmModuleBuilder
-            const possiblePaths = [
-                'WasmModuleBuilder',
-                'window.WasmModuleBuilder',
-                'globalThis.WasmModuleBuilder',
-                'WebAssembly.ModuleBuilder',
-                'WebAssembly.Builder',
-                'Builder',
-                'wasmModuleBuilder'
-            ];
-            
-            let found = false;
-            
-            possiblePaths.forEach(path => {
-                try {
-                    const exists = eval(`typeof ${path} !== 'undefined'`);
-                    if (exists) {
-                        logToPanel(`✅ ENCONTRADO: ${path}`);
-                        found = true;
-                        
-                        // Testar criação
-                        try {
-                            const builder = eval(`new ${path}()`);
-                            logToPanel(`   ✅ Construtor funciona`);
-                            
-                            // Verificar métodos
-                            const methods = ['addStruct', 'addArray', 'addGlobal', 'instantiate'];
-                            methods.forEach(method => {
-                                if (typeof builder[method] === 'function') {
-                                    logToPanel(`   ✅ ${method}() disponível`);
-                                }
-                            });
-                            
-                        } catch (e) {
-                            logToPanel(`   ❌ Erro ao usar: ${e.message}`);
-                        }
-                    }
-                } catch (e) {
-                    // Ignorar erros de avaliação
-                }
-            });
-            
-            if (!found) {
-                logToPanel('❌ WasmModuleBuilder não encontrado nos caminhos comuns');
-                logToPanel('');
-                logToPanel('💡 No PS5, a API pode estar:');
-                logToPanel('   1. Em escopo privado (não acessível)');
-                logToPanel('   2. Com nome diferente');
-                logToPanel('   3. Acessível apenas através de APIs específicas');
-                logToPanel('');
-                logToPanel('🔍 Tente inspecionar objetos globais:');
-                logToPanel('   for (let key in window) console.log(key);');
-            }
-            
-            showStatus(found ? 'ModuleBuilder encontrado!' : 'ModuleBuilder não encontrado', 
-                      found ? 'success' : 'warning');
-        }
-        
-        function testGCTypes() {
-            clearPanel('testOutput');
-            
-            logToPanel('=== TESTANDO GC TYPES (STRUCTS/ARRAYS) ===');
-            logToPanel('');
-            
-            // Testar WebAssembly.Global para reference types
-            if (typeof WebAssembly.Global === 'undefined') {
-                logToPanel('❌ WebAssembly.Global não disponível');
-                logToPanel('   GC Types provavelmente não suportados');
-                showStatus('GC Types não suportados', 'warning');
-                return;
-            }
-            
-            logToPanel('✅ WebAssembly.Global disponível');
-            logToPanel('');
-            logToPanel('=== TESTE DE REFERENCE TYPES ===');
-            
-            try {
-                // Tentar criar global com referência
-                const global = new WebAssembly.Global(
-                    { value: 'externref', mutable: false },
-                    null
-                );
-                logToPanel('✅ Global com externref criado');
-                
-                // Tentar outros tipos de referência
-                const refTypes = ['externref', 'funcref', 'anyref', 'eqref'];
-                refTypes.forEach(type => {
-                    try {
-                        const testGlobal = new WebAssembly.Global(
-                            { value: type, mutable: false },
-                            null
-                        );
-                        logToPanel(`   ✅ ${type} suportado`);
-                    } catch (e) {
-                        logToPanel(`   ❌ ${type} não suportado: ${e.message}`);
+                runPS5Poc().then(result => {
+                    this.disabled = false;
+                    this.textContent = 'Executar Teste POC';
+                    
+                    const statusDiv = document.getElementById('status');
+                    if (result.success) {
+                        statusDiv.innerHTML = 
+                            `<p style="color: #4CAF50;">✅ POC executado com sucesso!</p>
+                             <p>Overlap encontrado no índice: ${result.overlapIndex}</p>
+                             <p>${result.message}</p>`;
+                    } else {
+                        statusDiv.innerHTML = 
+                            `<p style="color: #FF9800;">⚠️ POC executado com limitações</p>
+                             <p>${result.message || result.error}</p>
+                             <p>No PS5 real, pode funcionar com a API correta.</p>`;
                     }
                 });
-                
-            } catch (error) {
-                logToPanel(`❌ Erro: ${error.message}`);
             }
-            
-            logToPanel('');
-            logToPanel('💡 Para testar structs/arrays, é necessário WasmModuleBuilder');
-            logToPanel('   com suporte a GC proposal ativado.');
-            
-            showStatus('Teste GC Types concluído', 'success');
-        }
+        };
         
-        function runExploitAnalysis() {
-            clearPanel('exploitOutput');
-            
-            logToPanel('=== ANÁLISE DE COMPATIBILIDADE DO EXPLOIT ===', exploitOutput);
-            logToPanel('', exploitOutput);
-            
-            // Requisitos do exploit
-            const requirements = [
-                {
-                    name: 'WasmModuleBuilder',
-                    available: false,
-                    critical: true,
-                    test: () => {
-                        try {
-                            return eval('typeof WasmModuleBuilder !== "undefined"') ||
-                                   eval('typeof window.WasmModuleBuilder !== "undefined"');
-                        } catch {
-                            return false;
-                        }
-                    }
-                },
-                {
-                    name: 'GC Types (addStruct/addArray)',
-                    available: false,
-                    critical: true,
-                    test: () => {
-                        // Depende de WasmModuleBuilder
-                        return false; // Será verificado separadamente
-                    }
-                },
-                {
-                    name: 'WebAssembly.Global',
-                    available: typeof WebAssembly.Global !== 'undefined',
-                    critical: true
-                },
-                {
-                    name: 'Função gc()',
-                    available: typeof gc !== 'undefined',
-                    critical: false,
-                    note: 'Pode afetar confiabilidade'
-                },
-                {
-                    name: 'Função load()',
-                    available: typeof load !== 'undefined',
-                    critical: false,
-                    note: 'Pode ser substituída'
-                }
-            ];
-            
-            // Executar testes
-            requirements.forEach(req => {
-                if (req.test) {
-                    req.available = req.test();
-                }
+        document.getElementById('detectBtn').onclick = function() {
+            if (typeof detectPS5Environment === 'function') {
+                const env = detectPS5Environment();
                 
-                logToPanel(`${req.available ? '✅' : '❌'} ${req.name}`, exploitOutput);
-                if (!req.available && req.critical) {
-                    logToPanel(`   ⚠️  REQUISITO CRÍTICO FALTANDO`, exploitOutput);
-                }
-            });
-            
-            logToPanel('', exploitOutput);
-            logToPanel('=== CONCLUSÃO ===', exploitOutput);
-            
-            const criticalMissing = requirements.filter(r => !r.available && r.critical).length;
-            
-            if (criticalMissing > 0) {
-                logToPanel('❌ EXPLOIT NÃO FUNCIONARÁ DIRETAMENTE', exploitOutput);
-                logToPanel(`   Faltam ${criticalMissing} requisitos críticos`, exploitOutput);
-                logToPanel('', exploitOutput);
-                logToPanel('💡 AÇÕES NECESSÁRIAS:', exploitOutput);
-                logToPanel('   1. Encontrar WasmModuleBuilder no PS5', exploitOutput);
-                logToPanel('   2. Verificar se GC Types estão habilitados', exploitOutput);
-                logToPanel('   3. Adaptar API calls para escopo correto', exploitOutput);
+                const envDiv = document.createElement('div');
+                envDiv.style.cssText = 'background: #e3f2fd; padding: 15px; margin: 15px 0; border-radius: 5px;';
                 
-                showStatus('Exploit não compatível diretamente', 'error');
-            } else {
-                logToPanel('⚠️  EXPLOIT PODE FUNCIONAR COM ADAPTAÇÕES', exploitOutput);
-                logToPanel('', exploitOutput);
-                logToPanel('🎯 PRÓXIMOS PASSOS:', exploitOutput);
-                logToPanel('   1. Carregar wasm-module-builder.js adaptado', exploitOutput);
-                logToPanel('   2. Substituir load()/gc()/print()', exploitOutput);
-                logToPanel('   3. Testar em ambiente PS5 real', exploitOutput);
+                let envHtml = '<h4>Detecção de Ambiente:</h4>';
+                Object.entries(env.info).forEach(([key, value]) => {
+                    envHtml += `<p><strong>${key}:</strong> ${value}</p>`;
+                });
                 
-                showStatus('Exploit potencialmente funcional!', 'success');
+                envHtml += `<p><strong>É PS5?:</strong> ${env.isPS5 ? 'Provavelmente SIM ✅' : 'Provavelmente NÃO ❌'}</p>`;
+                
+                envDiv.innerHTML = envHtml;
+                output.parentNode.insertBefore(envDiv, output);
             }
-        }
-        
-        function clearAllOutputs() {
-            clearPanel();
-            showStatus('Todos os outputs limpos', 'success');
-        }
-        
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', function() {
-            logToPanel('🔍 Testador WebAssembly PS5 - Baseado no código-fonte', testOutput);
-            logToPanel('📁 Repositório analisado: ps5-webkit-open-source-mirror', testOutput);
-            logToPanel('', testOutput);
-            logToPanel('Clique nos botões para executar testes...', testOutput);
-        });
+        };
     </script>
 </body>
 </html>
