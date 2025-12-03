@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Teste POC PS5 - WebKit JSC</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    button {
+      padding: 20px 40px;
+      font-size: 24px;
+      background: #0066ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    button:hover { background: #0055cc; }
+    button:active { transform: scale(0.98); }
+    pre {
+      margin-top: 30px;
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 6px;
+      max-width: 90%;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <button id="run">RODAR POC.JS (testar no PS5)</button>
+
+  <pre id="output">Resultado aparecerá aqui...</pre>
+
+  <!-- Carrega os dois arquivos JS -->
+  <script src="wasm-module-builder.js"></script>
+  <script src="poc.js"></script>
+
+  <script>
+    // Redireciona print() e console.log para a tela
+    const output = document.getElementById('output');
+
+    const oldPrint = print;
+    const oldLog = console.log;
+    const oldError = console.error;
+
+    function append(text) {
+      output.textContent += text + '\n';
+      output.scrollTop = output.scrollHeight;
+    }
+
+    print = function(...args) {
+      append(args.join(' '));
+      oldPrint && oldPrint.apply(this, args);
+    };
+
+    console.log = function(...args) {
+      append(args.join(' '));
+      oldLog.apply(this, args);
+    };
+
+    console.error = function(...args) {
+      append('ERROR: ' + args.join(' '));
+      oldError.apply(this, args);
+    };
+
+    // Botão que executa o poc.js
+    document.getElementById('run').addEventListener('click', function() {
+      output.textContent = 'Executando poc.js...\n';
+      try {
+        // O poc.js já tem tudo no escopo global, só chamar a função principal se existir
+        if (typeof main === 'function') {
+          main();
+        } else if (typeof run === 'function') {
+          run();
+        } else {
+          // Se o poc.js só tem código solto, ele já roda ao ser carregado
+          append('[+] poc.js carregado — veja acima se já imprimiu algo');
+        }
+      } catch (e) {
+        append('EXCEÇÃO: ' + e);
+        console.error(e);
+      }
+    });
+  </script>
+
+</body>
+</html>
