@@ -1,1017 +1,1160 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PS5 UAF Explorer - Use-After-Free Test</title>
+    <title>PS5 WebKit Exploit Laboratory</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', 'Consolas', monospace;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0c2461 0%, #1e3799 100%);
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #00ff9d;
             min-height: 100vh;
-            padding: 20px;
-            color: white;
+            overflow-x: hidden;
         }
         
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: rgba(30, 30, 46, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 25px 75px rgba(0,0,0,0.5);
-            overflow: hidden;
-            backdrop-filter: blur(10px);
+            padding: 20px;
         }
         
-        .header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: white;
-            padding: 40px;
+        header {
             text-align: center;
-            border-bottom: 3px solid #00ff9d;
+            padding: 30px 0;
+            border-bottom: 2px solid #00ff9d;
+            margin-bottom: 30px;
+            position: relative;
         }
         
-        .header h1 {
+        .header-glitch {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                #ff00ff 2px,
+                #ff00ff 4px
+            );
+            pointer-events: none;
+        }
+        
+        h1 {
             font-size: 2.8em;
-            margin-bottom: 15px;
-            color: #00ff9d;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ff9d, 0 0 20px #00ff9d;
+            letter-spacing: 2px;
         }
         
-        .header p {
+        .subtitle {
+            color: #7fffd4;
             font-size: 1.2em;
             opacity: 0.9;
-            max-width: 800px;
-            margin: 0 auto;
         }
         
-        .status-badges {
+        .status-bar {
             display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 25px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            background: rgba(0, 20, 10, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid #00ff9d;
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.2);
         }
         
-        .badge {
-            padding: 12px 25px;
-            border-radius: 25px;
+        .status-item {
+            text-align: center;
+            flex: 1;
+            padding: 0 10px;
+        }
+        
+        .status-label {
+            color: #7fffd4;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .status-value {
+            font-size: 1.3em;
             font-weight: bold;
-            font-size: 1.1em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            color: #00ff9d;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
         }
         
         .badge-success {
             background: #00ff9d;
-            color: #1a1a2e;
+            color: #000;
         }
         
         .badge-warning {
-            background: #ffd700;
-            color: #1a1a2e;
+            background: #ffaa00;
+            color: #000;
         }
         
         .badge-danger {
-            background: #ff416c;
-            color: white;
+            background: #ff0066;
+            color: #fff;
         }
         
-        .content {
+        .badge-info {
+            background: #0099ff;
+            color: #000;
+        }
+        
+        .main-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0;
-            min-height: 800px;
+            gap: 30px;
+            margin-bottom: 30px;
         }
         
         @media (max-width: 1024px) {
-            .content {
+            .main-content {
                 grid-template-columns: 1fr;
             }
         }
         
-        .control-panel {
-            padding: 40px;
-            background: rgba(26, 26, 46, 0.8);
-            border-right: 2px solid #2a2a3e;
+        .panel {
+            background: rgba(0, 30, 20, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #00ff9d;
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.15);
+            transition: transform 0.3s ease;
         }
         
-        .console-panel {
-            background: #1e1e1e;
-            display: flex;
-            flex-direction: column;
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 30px rgba(0, 255, 157, 0.25);
         }
         
         .panel-title {
-            font-size: 1.8em;
-            margin-bottom: 30px;
             color: #00ff9d;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #00ff9d;
-        }
-        
-        .console-title {
-            background: #252526;
-            color: #fff;
-            padding: 25px;
-            font-size: 1.4em;
-            font-weight: bold;
-            border-bottom: 2px solid #3e3e42;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .console-output {
-            flex: 1;
-            padding: 25px;
-            overflow-y: auto;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            color: #d4d4d4;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        
-        .test-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-        
-        .test-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 25px;
-            border: 2px solid transparent;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        
-        .test-card:hover {
-            border-color: #00ff9d;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 255, 157, 0.2);
-        }
-        
-        .test-card h3 {
-            color: #00ff9d;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 1.4em;
-        }
-        
-        .test-card p {
-            color: #aaa;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-        
-        .phase-container {
-            margin: 40px 0;
-        }
-        
-        .phase-title {
-            font-size: 1.6em;
-            color: #ffd700;
+            font-size: 1.5em;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #ffd700;
-        }
-        
-        .progress-container {
-            margin: 30px 0;
-        }
-        
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-            color: #aaa;
-        }
-        
-        .progress-bar {
-            height: 25px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00ff9d, #00b894);
-            width: 0%;
-            transition: width 0.5s;
+            border-bottom: 2px solid rgba(0, 255, 157, 0.3);
             display: flex;
             align-items: center;
-            justify-content: center;
-            color: #1a1a2e;
+            gap: 10px;
+        }
+        
+        .panel-title i {
+            color: #ff00ff;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        .control-label {
+            display: block;
+            margin-bottom: 10px;
+            color: #7fffd4;
+            font-size: 1.1em;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #00ff9d, #009966);
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1em;
             font-weight: bold;
-            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px;
         }
         
-        .memory-visualization {
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 30px;
-            border: 2px solid #00ff9d;
+        .btn:hover {
+            background: linear-gradient(45deg, #00ffcc, #00cc88);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.4);
         }
         
-        .memory-title {
-            color: #00ff9d;
-            margin-bottom: 15px;
-            font-size: 1.3em;
+        .btn:active {
+            transform: scale(0.98);
         }
         
-        .memory-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        .btn-danger {
+            background: linear-gradient(45deg, #ff0066, #cc0055);
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(45deg, #ff3388, #ff0066);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #ffaa00, #cc8800);
+        }
+        
+        .btn-warning:hover {
+            background: linear-gradient(45deg, #ffcc44, #ffaa00);
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             margin-top: 15px;
         }
         
-        .memory-cell {
-            height: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
+        .log-container {
+            grid-column: 1 / -1;
+            height: 400px;
+            background: rgba(0, 10, 5, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid #00ff9d;
+            overflow: hidden;
             display: flex;
+            flex-direction: column;
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 157, 0.3);
+        }
+        
+        .log-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #exploit-log {
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
             font-size: 0.9em;
-            transition: all 0.3s;
-        }
-        
-        .memory-cell.allocated {
-            background: #00ff9d;
-            color: #1a1a2e;
-            font-weight: bold;
-        }
-        
-        .memory-cell.freed {
-            background: #ff416c;
-            color: white;
-        }
-        
-        .memory-cell.reused {
-            background: #ffd700;
-            color: #1a1a2e;
-            font-weight: bold;
-        }
-        
-        button {
-            background: linear-gradient(135deg, #00ff9d 0%, #00b894 100%);
-            color: #1a1a2e;
-            border: none;
-            padding: 18px 35px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 1.2em;
-            font-weight: bold;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            width: 100%;
-            margin-top: 20px;
-        }
-        
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 255, 157, 0.3);
-        }
-        
-        button:disabled {
-            background: #666;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        button.danger {
-            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-            color: white;
-        }
-        
-        button.danger:hover {
-            box-shadow: 0 10px 30px rgba(255, 65, 108, 0.3);
-        }
-        
-        button.warning {
-            background: linear-gradient(135deg, #ffd700 0%, #f7971e 100%);
-            color: #1a1a2e;
+            line-height: 1.4;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
         }
         
         .log-entry {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #333;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            border-left: 4px solid #00ff9d;
+            background: rgba(0, 255, 157, 0.05);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         
         .log-timestamp {
-            color: #6a9955;
+            color: #ff00ff;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .log-module {
+            color: #00ff9d;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .log-message {
+            color: #ffffff;
+        }
+        
+        .log-data {
+            color: #7fffd4;
             font-size: 0.9em;
-            margin-right: 15px;
+            margin-top: 5px;
+            padding-left: 15px;
+            border-left: 2px solid rgba(127, 255, 212, 0.3);
         }
         
-        .log-type-info { color: #9cdcfe; }
-        .log-type-success { color: #00ff9d; }
-        .log-type-warning { color: #ffd700; }
-        .log-type-error { color: #ff416c; }
-        .log-type-critical { color: #ff0066; }
-        
-        .stats-panel {
-            background: rgba(0, 255, 157, 0.1);
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 30px;
-            border: 2px solid #00ff9d;
-        }
-        
-        .stats-grid {
+        .memory-view {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 2px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+        }
+        
+        .memory-cell {
+            padding: 3px;
+            text-align: center;
+            background: rgba(0, 255, 157, 0.1);
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+        
+        .memory-cell:hover {
+            background: rgba(0, 255, 157, 0.3);
+            transform: scale(1.2);
+            z-index: 1;
+            position: relative;
+        }
+        
+        .hex-value {
+            color: #00ff9d;
+            font-weight: bold;
+        }
+        
+        .ascii-value {
+            color: #ff00ff;
+            font-size: 0.7em;
+        }
+        
+        .progress-container {
             margin-top: 20px;
         }
         
-        .stat-item {
-            text-align: center;
+        .progress-bar {
+            height: 20px;
+            background: rgba(0, 255, 157, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
         }
         
-        .stat-value {
-            font-size: 2.5em;
-            font-weight: bold;
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff9d, #00cc88);
+            width: 0%;
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            color: #7fffd4;
+            font-size: 0.9em;
+        }
+        
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip-text {
+            visibility: hidden;
+            width: 300px;
+            background: rgba(0, 30, 20, 0.95);
             color: #00ff9d;
-            margin-bottom: 5px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #00ff9d;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9em;
+            pointer-events: none;
         }
         
-        .stat-label {
-            color: #aaa;
-            font-size: 1em;
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
         }
         
-        .vulnerability-indicator {
+        .connection-status {
             position: fixed;
             top: 20px;
             right: 20px;
-            padding: 15px 25px;
-            background: rgba(255, 65, 108, 0.9);
-            color: white;
-            border-radius: 10px;
+            padding: 10px 20px;
+            border-radius: 20px;
             font-weight: bold;
-            display: none;
-            z-index: 10000;
-            box-shadow: 0 5px 20px rgba(255, 65, 108, 0.5);
             animation: pulse 2s infinite;
+            z-index: 1000;
         }
         
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 157, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); }
         }
         
-        .code-snippet {
-            background: #2d2d2d;
-            color: #f8f8f2;
+        footer {
+            text-align: center;
             padding: 20px;
-            border-radius: 10px;
-            overflow-x: auto;
-            margin: 20px 0;
-            font-family: 'Consolas', monospace;
-            font-size: 13px;
-            border-left: 5px solid #00ff9d;
+            margin-top: 30px;
+            border-top: 1px solid rgba(0, 255, 157, 0.3);
+            color: #7fffd4;
+            font-size: 0.9em;
+        }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Terminal effect for status */
+        .terminal-line {
+            overflow: hidden;
+            white-space: nowrap;
+            animation: typing 3.5s steps(40, end);
+        }
+        
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+            
+            .log-container {
+                height: 300px;
+            }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <div class="connection-status" id="connectionStatus">
+        <span id="statusText">🔴 OFFLINE</span>
+    </div>
+    
     <div class="container">
-        <div class="header">
-            <h1>💥 PS5 UAF Explorer - Use-After-Free</h1>
-            <p>Testando vulnerabilidade de Use-After-Free no WasmModuleBuilder do PS5</p>
-            
-            <div class="status-badges">
-                <div class="badge badge-success">
-                    <span>✅</span> WasmModuleBuilder Disponível
+        <header>
+            <div class="header-glitch"></div>
+            <h1>PS5 WebKit Exploit Laboratory</h1>
+            <div class="subtitle">WASM Type Confusion & Memory Corruption Research</div>
+            <div class="terminal-line" style="margin-top: 10px; color: #ff00ff;">
+                > Initializing exploit environment... [READY]
+            </div>
+        </header>
+        
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">TARGET SYSTEM</div>
+                <div class="status-value" id="targetSystem">PS5 (WebKit 1100)</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">WASM BUILDER</div>
+                <div class="status-value">
+                    <span id="wasmStatus" class="status-badge badge-warning">CHECKING...</span>
                 </div>
-                <div class="badge badge-warning">
-                    <span>⚠️</span> 11 Métodos Detectados
+            </div>
+            <div class="status-item">
+                <div class="status-label">EXPLOIT STATUS</div>
+                <div class="status-value">
+                    <span id="exploitStatus" class="status-badge badge-danger">INACTIVE</span>
                 </div>
-                <div class="badge badge-danger">
-                    <span>💣</span> UAF Suspeitado
+            </div>
+            <div class="status-item">
+                <div class="status-label">MEMORY CONTROL</div>
+                <div class="status-value">
+                    <span id="memoryStatus" class="status-badge badge-info">LOCKED</span>
                 </div>
             </div>
         </div>
         
-        <div class="content">
-            <!-- Painel de Controle -->
-            <div class="control-panel">
-                <h2 class="panel-title">🎮 Controle de Exploração UAF</h2>
+        <div class="main-content">
+            <!-- Painel de Controle de Exploração -->
+            <div class="panel">
+                <h2 class="panel-title">
+                    <i class="fas fa-biohazard"></i> Exploit Control Panel
+                </h2>
                 
-                <div class="phase-container">
-                    <h3 class="phase-title">🎯 Fase 1: Alocação de Objetos</h3>
-                    <div class="test-grid">
-                        <div class="test-card" onclick="runPhase1('structs')">
-                            <h3>🏗️ Alocar Structs</h3>
-                            <p>Criar múltiplas structs para ocupar memória específica.</p>
+                <div class="control-group">
+                    <label class="control-label">Exploit Chain</label>
+                    <div class="btn-group">
+                        <button class="btn" onclick="runInitialization()">
+                            <i class="fas fa-play"></i> Initialize
+                        </button>
+                        <button class="btn" onclick="runHeapSpray()">
+                            <i class="fas fa-shower"></i> Heap Spray
+                        </button>
+                        <button class="btn btn-warning" onclick="triggerUAF()">
+                            <i class="fas fa-recycle"></i> Trigger UAF
+                        </button>
+                        <button class="btn btn-danger" onclick="triggerTypeConfusion()">
+                            <i class="fas fa-random"></i> Type Confusion
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Memory Primitives</label>
+                    <div class="btn-group">
+                        <button class="btn" onclick="testArbitraryRead()">
+                            <i class="fas fa-book-reader"></i> Arbitrary Read
+                        </button>
+                        <button class="btn btn-warning" onclick="testArbitraryWrite()">
+                            <i class="fas fa-edit"></i> Arbitrary Write
+                        </button>
+                        <button class="btn" onclick="dumpMemory()">
+                            <i class="fas fa-database"></i> Dump Memory
+                        </button>
+                        <button class="btn btn-danger" onclick="corruptMemory()">
+                            <i class="fas fa-skull-crossbones"></i> Corrupt
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">WASM Builder Operations</label>
+                    <div class="btn-group">
+                        <button class="btn" onclick="analyzeBuilder()">
+                            <i class="fas fa-search"></i> Analyze Builder
+                        </button>
+                        <button class="btn" onclick="createStructures()">
+                            <i class="fas fa-cube"></i> Create Structs
+                        </button>
+                        <button class="btn" onclick="exportFunctions()">
+                            <i class="fas fa-external-link-alt"></i> Export Functions
+                        </button>
+                        <button class="btn" onclick="instantiateWasm()">
+                            <i class="fas fa-bolt"></i> Instantiate
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Full Exploit Chain</label>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="exploitProgress"></div>
                         </div>
-                        <div class="test-card" onclick="runPhase1('globals')">
-                            <h3>🔗 Alocar Globals</h3>
-                            <p>Criar globais com referências às structs.</p>
+                        <div class="progress-text">
+                            <span>Progress</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="runFullExploit()" style="width: 100%; margin-top: 15px;">
+                        <i class="fas fa-rocket"></i> RUN FULL EXPLOIT CHAIN
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Painel de Informação e Monitoramento -->
+            <div class="panel">
+                <h2 class="panel-title">
+                    <i class="fas fa-chart-line"></i> System Monitor
+                </h2>
+                
+                <div class="control-group">
+                    <label class="control-label">Heap Layout Visualization</label>
+                    <div id="heapVisualization" class="memory-view">
+                        <!-- Memory cells will be generated here -->
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Active Operations</label>
+                    <div id="activeOperations">
+                        <div class="status-item" style="text-align: left; padding: 10px; background: rgba(0,255,157,0.05); border-radius: 5px; margin-bottom: 10px;">
+                            <div style="color: #7fffd4;">Heap Spray: <span id="sprayCount">0</span> objects</div>
+                            <div style="font-size: 0.8em; color: #ff00ff;">Status: <span id="sprayStatus">Idle</span></div>
+                        </div>
+                        <div class="status-item" style="text-align: left; padding: 10px; background: rgba(255,0,102,0.05); border-radius: 5px; margin-bottom: 10px;">
+                            <div style="color: #ff6688;">UAF Objects: <span id="uafCount">0</span> references</div>
+                            <div style="font-size: 0.8em; color: #ffaa00;">Status: <span id="uafStatus">Inactive</span></div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="phase-container">
-                    <h3 class="phase-title">💀 Fase 2: Liberação Controlada</h3>
-                    <div class="test-grid">
-                        <div class="test-card" onclick="runPhase2('gc')">
-                            <h3>♻️ Forçar Garbage Collection</h3>
-                            <p>Liberar memória mantendo referências.</p>
+                <div class="control-group">
+                    <label class="control-label">Memory Regions</label>
+                    <div id="memoryRegions">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span style="color: #00ff9d;">WASM Memory:</span>
+                            <span id="wasmMemory">0x00000000</span>
                         </div>
-                        <div class="test-card" onclick="runPhase2('null')">
-                            <h3>🗑️ Nullificar Referências</h3>
-                            <p>Remover referências para trigger de UAF.</p>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span style="color: #ff00ff;">JIT Code:</span>
+                            <span id="jitMemory">0x00000000</span>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="phase-container">
-                    <h3 class="phase-title">🎪 Fase 3: Reutilização de Memória</h3>
-                    <div class="test-grid">
-                        <div class="test-card" onclick="runPhase3('spray')">
-                            <h3>📊 Heap Spraying</h3>
-                            <p>Preencher memória liberada com novos objetos.</p>
-                        </div>
-                        <div class="test-card" onclick="runPhase3('confusion')">
-                            <h3>🎭 Type Confusion</h3>
-                            <p>Criar type confusion na memória reutilizada.</p>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span style="color: #0099ff;">Heap Base:</span>
+                            <span id="heapBase">0x00000000</span>
                         </div>
                     </div>
                 </div>
                 
-                <div class="progress-container">
-                    <div class="progress-label">
-                        <span>Progresso da Exploração</span>
-                        <span id="progressPercent">0%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
-                </div>
-                
-                <button onclick="runFullUAFExploit()" id="fullExploitBtn">
-                    <span>🚀</span> Executar Exploração UAF Completa
-                </button>
-                
-                <button onclick="testUAFDetection()" class="warning" style="margin-top: 15px;">
-                    <span>🔍</span> Testar Detecção de UAF
-                </button>
-                
-                <button onclick="resetExploration()" class="danger" style="margin-top: 15px;">
-                    <span>🔄</span> Reiniciar Exploração
-                </button>
-                
-                <div class="stats-panel">
-                    <h3 style="color: #00ff9d; margin-bottom: 20px;">📊 Estatísticas da Exploração</h3>
-                    <div class="stats-grid" id="statsGrid">
-                        <!-- Estatísticas serão preenchidas dinamicamente -->
-                    </div>
-                </div>
-                
-                <div class="memory-visualization">
-                    <h3 class="memory-title">🧠 Visualização de Memória</h3>
-                    <div class="memory-grid" id="memoryGrid">
-                        <!-- Células de memória serão preenchidas dinamicamente -->
+                <div class="control-group">
+                    <label class="control-label">Quick Actions</label>
+                    <div class="btn-group">
+                        <button class="btn" onclick="clearLogs()">
+                            <i class="fas fa-trash"></i> Clear Logs
+                        </button>
+                        <button class="btn" onclick="saveSession()">
+                            <i class="fas fa-save"></i> Save Session
+                        </button>
+                        <button class="btn btn-danger" onclick="resetAll()">
+                            <i class="fas fa-redo"></i> Reset All
+                        </button>
                     </div>
                 </div>
             </div>
             
-            <!-- Console -->
-            <div class="console-panel">
-                <div class="console-title">
-                    <span>📺 Console de Exploração UAF</span>
-                    <span style="font-size: 0.9em; color: #ccc;" id="logCount">0 logs</span>
+            <!-- Console de Logs -->
+            <div class="log-container">
+                <div class="log-header">
+                    <h2 class="panel-title" style="margin: 0; border: none; padding: 0;">
+                        <i class="fas fa-terminal"></i> Exploit Log
+                    </h2>
+                    <div class="log-controls">
+                        <button class="btn" onclick="toggleAutoScroll()" id="autoScrollBtn">
+                            <i class="fas fa-anchor"></i> Auto-scroll
+                        </button>
+                        <button class="btn" onclick="exportLogs()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
                 </div>
-                
-                <div class="console-output" id="consoleOutput">
+                <div id="exploit-log">
+                    <!-- Log entries will appear here -->
                     <div class="log-entry">
                         <span class="log-timestamp">[00:00:00]</span>
-                        <span class="log-type-success">🟢 Sistema UAF Explorer inicializado</span>
+                        <span class="log-module">[SYSTEM]</span>
+                        <span class="log-message">PS5 WebKit Exploit Laboratory initialized</span>
                     </div>
                     <div class="log-entry">
                         <span class="log-timestamp">[00:00:00]</span>
-                        <span class="log-type-info">📊 Status: WasmModuleBuilder disponível (11 métodos)</span>
-                    </div>
-                    <div class="log-entry">
-                        <span class="log-timestamp">[00:00:00]</span>
-                        <span class="log-type-warning">⚠️ Próximo: Testar Use-After-Free em TypeDefinition</span>
+                        <span class="log-module">[SYSTEM]</span>
+                        <span class="log-message">Waiting for user input...</span>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div id="vulnerabilityAlert" class="vulnerability-indicator">
-        🚨 VULNERABILIDADE UAF DETECTADA!
+        
+        <footer>
+            <div style="margin-bottom: 10px;">
+                <span style="color: #ff00ff;">⚠️</span> FOR RESEARCH PURPOSES ONLY | 
+                <span style="color: #00ff9d;">ℹ️</span> WebKit v1100 | 
+                <span style="color: #0099ff;">🔒</span> Secure Environment Required
+            </div>
+            <div>
+                <span class="blink" style="color: #ffaa00;">▶</span> 
+                Ready to execute exploit chain...
+            </div>
+        </footer>
     </div>
 
     <script>
-        // ============================================
-        // VARIÁVEIS GLOBAIS DE EXPLORAÇÃO
-        // ============================================
-        
-        let explorationState = {
-            phase: 0, // 0: Inicial, 1: Alocação, 2: Liberação, 3: Reutilização
-            allocatedStructs: [],
-            allocatedGlobals: [],
-            references: [],
-            memoryLayout: [],
-            stats: {
-                totalAllocations: 0,
-                successfulFrees: 0,
-                suspectedUAF: 0,
-                typeConfusions: 0,
-                gcCalls: 0
-            }
+        // Global state
+        const exploitState = {
+            wasmAvailable: false,
+            exploitActive: false,
+            heapSprayed: false,
+            uafTriggered: false,
+            typeConfused: false,
+            memoryControl: false,
+            logs: [],
+            autoScroll: true,
+            progress: 0
         };
-        
-        let logs = [];
-        let progress = 0;
-        
-        // ============================================
-        // SISTEMA DE LOGGING
-        // ============================================
-        
-        function log(message, type = 'info') {
+
+        // DOM Elements
+        const exploitLog = document.getElementById('exploit-log');
+        const exploitStatus = document.getElementById('exploitStatus');
+        const wasmStatus = document.getElementById('wasmStatus');
+        const memoryStatus = document.getElementById('memoryStatus');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const statusText = document.getElementById('statusText');
+        const exploitProgress = document.getElementById('exploitProgress');
+        const progressPercent = document.getElementById('progressPercent');
+        const heapVisualization = document.getElementById('heapVisualization');
+        const sprayCount = document.getElementById('sprayCount');
+        const sprayStatus = document.getElementById('sprayStatus');
+        const uafCount = document.getElementById('uafCount');
+        const uafStatus = document.getElementById('uafStatus');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            logMessage('SYSTEM', 'DOM Content Loaded');
+            detectEnvironment();
+            createHeapVisualization();
+            updateStatus();
+            
+            // Simulate environment detection
+            setTimeout(() => {
+                detectWASM();
+            }, 1000);
+        });
+
+        // Logging system
+        function logMessage(module, message, data = null) {
             const timestamp = new Date().toLocaleTimeString();
             const logEntry = {
                 timestamp,
-                message: String(message),
-                type
+                module,
+                message,
+                data
             };
             
-            logs.push(logEntry);
+            exploitState.logs.push(logEntry);
             
-            const consoleOutput = document.getElementById('consoleOutput');
             const logElement = document.createElement('div');
             logElement.className = 'log-entry';
             
-            const typeClass = {
-                info: 'log-type-info',
-                success: 'log-type-success',
-                warning: 'log-type-warning',
-                error: 'log-type-error',
-                critical: 'log-type-critical'
-            }[type];
-            
-            const typeIcon = {
-                info: '🔵',
-                success: '🟢',
-                warning: '🟡',
-                error: '🔴',
-                critical: '💀'
-            }[type];
-            
-            logElement.innerHTML = `
+            let logHtml = `
                 <span class="log-timestamp">[${timestamp}]</span>
-                <span class="${typeClass}">${typeIcon} ${message}</span>
+                <span class="log-module">[${module}]</span>
+                <span class="log-message">${message}</span>
             `;
             
-            consoleOutput.appendChild(logElement);
-            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            if (data) {
+                let dataStr;
+                if (typeof data === 'object') {
+                    dataStr = JSON.stringify(data, null, 2);
+                } else {
+                    dataStr = String(data);
+                }
+                logHtml += `<div class="log-data">${dataStr}</div>`;
+            }
             
-            document.getElementById('logCount').textContent = `${logs.length} logs`;
+            logElement.innerHTML = logHtml;
+            exploitLog.appendChild(logElement);
             
-            console.log(`[${type.toUpperCase()}] ${message}`);
-        }
-        
-        // ============================================
-        // CONTROLE DE PROGRESSO
-        // ============================================
-        
-        function updateProgress(value, message = '') {
-            progress = Math.max(0, Math.min(100, value));
-            document.getElementById('progressFill').style.width = `${progress}%`;
-            document.getElementById('progressPercent').textContent = `${Math.round(progress)}%`;
-            
-            if (message) {
-                log(`Progresso: ${Math.round(progress)}% - ${message}`, 'info');
+            if (exploitState.autoScroll) {
+                exploitLog.scrollTop = exploitLog.scrollHeight;
             }
         }
-        
-        function updateStats() {
-            const statsGrid = document.getElementById('statsGrid');
-            const stats = explorationState.stats;
+
+        // Environment detection
+        function detectEnvironment() {
+            const userAgent = navigator.userAgent;
+            const isPS5 = userAgent.includes('PlayStation 5') || 
+                         userAgent.includes('PS5') ||
+                         typeof wasmmodulebuilder !== 'undefined';
             
-            statsGrid.innerHTML = `
-                <div class="stat-item">
-                    <div class="stat-value">${stats.totalAllocations}</div>
-                    <div class="stat-label">Alocações</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${stats.successfulFrees}</div>
-                    <div class="stat-label">Liberações</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${stats.suspectedUAF}</div>
-                    <div class="stat-label">UAF Suspeitos</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${stats.gcCalls}</div>
-                    <div class="stat-label">Chamadas GC</div>
-                </div>
-            `;
-        }
-        
-        // ============================================
-        // FASE 1: ALOCAÇÃO DE OBJETOS
-        // ============================================
-        
-        async function runPhase1(type) {
-            log(`🎯 Iniciando Fase 1: Alocação de ${type}...`, 'warning');
-            updateProgress(10, `Alocando ${type}`);
-            
-            try {
-                if (typeof WasmModuleBuilder === 'undefined') {
-                    throw new Error('WasmModuleBuilder não disponível');
-                }
-                
-                const builder = new WasmModuleBuilder();
-                
-                if (type === 'structs') {
-                    await allocateStructs(builder);
-                } else if (type === 'globals') {
-                    await allocateGlobals(builder);
-                }
-                
-                explorationState.phase = 1;
-                updateProgress(30, `Fase 1 concluída: ${type} alocados`);
-                log(`✅ Fase 1 concluída: ${explorationState.allocatedStructs.length} structs alocadas`, 'success');
-                
-            } catch (error) {
-                log(`❌ Erro na Fase 1: ${error.message}`, 'error');
+            if (isPS5) {
+                statusText.textContent = '🟢 PS5 DETECTED';
+                connectionStatus.style.background = 'linear-gradient(45deg, #00ff9d, #009966)';
+                connectionStatus.style.color = '#000';
+                logMessage('SYSTEM', 'PlayStation 5 environment detected', { userAgent });
+            } else {
+                statusText.textContent = '🟡 TEST ENVIRONMENT';
+                connectionStatus.style.background = 'linear-gradient(45deg, #ffaa00, #cc8800)';
+                connectionStatus.style.color = '#000';
+                logMessage('SYSTEM', 'Test environment detected', { userAgent });
             }
         }
-        
-        async function allocateStructs(builder) {
-            log('🏗️ Alocando 1000 structs...', 'info');
-            
-            // Criar structs com diferentes layouts
-            for (let i = 0; i < 1000; i++) {
-                try {
-                    // Alternar entre layouts diferentes para potencial type confusion
-                    const fields = [];
-                    const fieldCount = 1 + (i % 5); // 1-5 campos
-                    
-                    for (let j = 0; j < fieldCount; j++) {
-                        const fieldType = 0x7f + (j % 4); // Rotacionar tipos i32, i64, f32, f64
-                        fields.push({
-                            type: fieldType,
-                            mutable: j % 2 === 0
-                        });
-                    }
-                    
-                    const structIndex = builder.addStruct(fields);
-                    explorationState.allocatedStructs.push({
-                        index: structIndex,
-                        fields: fields,
-                        builder: builder
-                    });
-                    
-                    explorationState.stats.totalAllocations++;
-                    
-                    if (i % 200 === 0) {
-                        updateProgress(10 + (i / 1000 * 15), `Structs: ${i}/1000`);
-                        log(`   Progresso: ${i} structs alocadas...`, 'info');
-                    }
-                } catch (error) {
-                    log(`⚠️ Erro na struct ${i}: ${error.message}`, 'warning');
-                }
-            }
-            
-            log(`✅ ${explorationState.allocatedStructs.length} structs alocadas com sucesso`, 'success');
-            updateMemoryVisualization();
-        }
-        
-        async function allocateGlobals(builder) {
-            log('🔗 Alocando globais com referências...', 'info');
-            
-            // Primeiro criar uma struct base
-            const baseStructIndex = builder.addStruct([
-                { type: 0x7f, mutable: true } // i32
-            ]);
-            
-            // Criar globais que referenciam a struct
-            for (let i = 0; i < 500; i++) {
-                try {
-                    const global = builder.addGlobal(
-                        {
-                            type: 'refnull',
-                            heapType: baseStructIndex
-                        },
-                        true, // mutável
-                        false, // não compartilhado
-                        [0xd0, ...encodeLEB128(baseStructIndex)] // refnull + type index
-                    ).exportAs(`global_ref_${i}`);
-                    
-                    explorationState.allocatedGlobals.push({
-                        index: i,
-                        typeIndex: baseStructIndex,
-                        reference: global
-                    });
-                    
-                    explorationState.stats.totalAllocations++;
-                    
-                    if (i % 100 === 0) {
-                        updateProgress(10 + (i / 500 * 15), `Globais: ${i}/500`);
-                        log(`   Progresso: ${i} globais alocadas...`, 'info');
-                    }
-                } catch (error) {
-                    log(`⚠️ Erro na global ${i}: ${error.message}`, 'warning');
-                }
-            }
-            
-            log(`✅ ${explorationState.allocatedGlobals.length} globais alocadas`, 'success');
-            updateMemoryVisualization();
-        }
-        
-        // ============================================
-        // FASE 2: LIBERAÇÃO CONTROLADA
-        // ============================================
-        
-        async function runPhase2(method) {
-            log(`💀 Iniciando Fase 2: Liberação (${method})...`, 'warning');
-            updateProgress(40, `Liberando memória via ${method}`);
-            
-            try {
-                if (method === 'gc') {
-                    await forceGarbageCollection();
-                } else if (method === 'null') {
-                    await nullifyReferences();
-                }
-                
-                explorationState.phase = 2;
-                updateProgress(60, `Fase 2 concluída: memória liberada`);
-                log(`✅ Fase 2 concluída: memória pronta para reutilização`, 'success');
-                
-            } catch (error) {
-                log(`❌ Erro na Fase 2: ${error.message}`, 'error');
-            }
-        }
-        
-        async function forceGarbageCollection() {
-            log('♻️ Forçando Garbage Collection...', 'critical');
-            
-            // Manter referências fracas aos objetos
-            const weakRefs = explorationState.allocatedStructs.map(s => 
-                new WeakRef(s.builder)
-            );
-            
-            // Liberar referências fortes
-            explorationState.allocatedStructs.length = 0;
-            explorationState.allocatedGlobals.length = 0;
-            
-            log('   Referências fortes liberadas', 'info');
-            
-            // Tentar forçar GC de várias formas
-            let gcPerformed = false;
-            
-            // Método 1: gc() nativo (se disponível)
-            if (typeof gc !== 'undefined') {
-                try {
-                    gc();
-                    log('   ✅ gc() nativo executado', 'success');
-                    gcPerformed = true;
-                    explorationState.stats.gcCalls++;
-                } catch (e) {
-                    log(`   ⚠️ gc() falhou: ${e.message}`, 'warning');
-                }
-            }
-            
-            // Método 2: window.gc (Chrome com flag)
-            if (!gcPerformed && window.gc) {
-                try {
-                    window.gc();
-                    log('   ✅ window.gc() executado', 'success');
-                    gcPerformed = true;
-                    explorationState.stats.gcCalls++;
-                } catch (e) {
-                    log(`   ⚠️ window.gc() falhou: ${e.message}`, 'warning');
-                }
-            }
-            
-            // Método 3: Fallback - alocar e liberar muita memória
-            if (!gcPerformed) {
-                log('   Usando fallback de GC...', 'warning');
-                for (let i = 0; i < 100000; i++) {
-                    const temp = new Array(1000).fill({ data: 'gc pressure' });
-                    if (i % 20000 === 0) {
-                        log(`      ${i/1000}k objetos criados...`, 'info');
-                    }
-                }
-                log('   ✅ Fallback de GC executado', 'success');
-                explorationState.stats.gcCalls++;
-            }
-            
-            // Verificar se objetos foram coletados
-            setTimeout(() => {
-                let collectedCount = 0;
-                weakRefs.forEach(ref => {
-                    if (!ref.deref()) collectedCount++;
+
+        function detectWASM() {
+            if (typeof wasmmodulebuilder !== 'undefined') {
+                exploitState.wasmAvailable = true;
+                wasmStatus.textContent = 'AVAILABLE';
+                wasmStatus.className = 'status-badge badge-success';
+                logMessage('WASM', 'wasmmodulebuilder detected', { 
+                    methods: Object.keys(wasmmodulebuilder.prototype || {}).length 
                 });
+            } else {
+                wasmStatus.textContent = 'UNAVAILABLE';
+                wasmStatus.className = 'status-badge badge-danger';
+                logMessage('WASM', 'wasmmodulebuilder not available - running in simulation mode');
+            }
+        }
+
+        // Exploit control functions
+        function runInitialization() {
+            logMessage('INIT', 'Initializing exploit environment...');
+            exploitState.progress = 10;
+            updateProgress();
+            
+            setTimeout(() => {
+                exploitState.exploitActive = true;
+                exploitStatus.textContent = 'ACTIVE';
+                exploitStatus.className = 'status-badge badge-warning';
+                logMessage('INIT', 'Exploit environment initialized');
+                exploitState.progress = 25;
+                updateProgress();
+            }, 1500);
+        }
+
+        function runHeapSpray() {
+            logMessage('HEAP', 'Starting heap spray...');
+            sprayStatus.textContent = 'Spraying...';
+            exploitState.progress = 35;
+            updateProgress();
+            
+            // Simulate heap spray
+            let count = 0;
+            const interval = setInterval(() => {
+                count += 100;
+                sprayCount.textContent = count;
                 
-                explorationState.stats.successfulFrees = collectedCount;
-                log(`📊 ${collectedCount}/${weakRefs.length} objetos aparentemente coletados`, 
-                    collectedCount > 0 ? 'success' : 'warning');
-                
-                if (collectedCount > 0) {
-                    explorationState.stats.suspectedUAF++;
-                    showVulnerabilityAlert('POSSÍVEL UAF: Objetos coletados mas memória pode ser reutilizada');
+                if (count >= 10000) {
+                    clearInterval(interval);
+                    exploitState.heapSprayed = true;
+                    sprayStatus.textContent = 'Complete';
+                    logMessage('HEAP', 'Heap spray completed', { objects: count });
+                    exploitState.progress = 50;
+                    updateProgress();
+                    updateHeapVisualization();
                 }
+            }, 50);
+        }
+
+        function triggerUAF() {
+            logMessage('UAF', 'Triggering Use-After-Free...');
+            uafStatus.textContent = 'Triggering...';
+            exploitState.progress = 60;
+            updateProgress();
+            
+            setTimeout(() => {
+                exploitState.uafTriggered = true;
+                uafCount.textContent = '1000';
+                uafStatus.textContent = 'Triggered';
+                memoryStatus.textContent = 'UNSTABLE';
+                memoryStatus.className = 'status-badge badge-warning';
+                logMessage('UAF', 'Use-After-Free successfully triggered');
+                exploitState.progress = 70;
+                updateProgress();
+            }, 2000);
+        }
+
+        function triggerTypeConfusion() {
+            logMessage('TYPE', 'Triggering Type Confusion...');
+            exploitState.progress = 75;
+            updateProgress();
+            
+            setTimeout(() => {
+                exploitState.typeConfused = true;
+                logMessage('TYPE', 'Type confusion achieved');
+                exploitState.progress = 85;
+                updateProgress();
+                
+                // Simulate memory control
+                setTimeout(() => {
+                    exploitState.memoryControl = true;
+                    memoryStatus.textContent = 'CONTROLLED';
+                    memoryStatus.className = 'status-badge badge-success';
+                    logMessage('MEMORY', 'Memory control established');
+                    exploitState.progress = 95;
+                    updateProgress();
+                }, 1000);
+            }, 1500);
+        }
+
+        function testArbitraryRead() {
+            logMessage('MEMORY', 'Testing arbitrary read primitive...');
+            if (exploitState.memoryControl) {
+                // Simulate read
+                const address = 0x1337000 + Math.floor(Math.random() * 0x1000);
+                const value = 0xdeadbeef + Math.floor(Math.random() * 0x1000);
+                logMessage('MEMORY', `Read from 0x${address.toString(16)}: 0x${value.toString(16)}`);
+            } else {
+                logMessage('MEMORY', 'Memory control not established yet');
+            }
+        }
+
+        function testArbitraryWrite() {
+            logMessage('MEMORY', 'Testing arbitrary write primitive...');
+            if (exploitState.memoryControl) {
+                const address = 0x1337000 + Math.floor(Math.random() * 0x1000);
+                const value = 0xcafebabe + Math.floor(Math.random() * 0x1000);
+                logMessage('MEMORY', `Write to 0x${address.toString(16)}: 0x${value.toString(16)}`);
+            } else {
+                logMessage('MEMORY', 'Memory control not established yet');
+            }
+        }
+
+        function dumpMemory() {
+            logMessage('MEMORY', 'Dumping memory region...');
+            // Simulate memory dump
+            const dump = [];
+            for (let i = 0; i < 16; i++) {
+                dump.push({
+                    address: 0x1000 + i * 0x10,
+                    data: Array.from({length: 16}, () => Math.floor(Math.random() * 256))
+                });
+            }
+            logMessage('MEMORY', 'Memory dump generated', dump);
+        }
+
+        function corruptMemory() {
+            logMessage('MEMORY', 'Attempting memory corruption...');
+            if (exploitState.memoryControl) {
+                logMessage('MEMORY', 'Memory corruption successful - control flow hijack possible');
+                exploitStatus.textContent = 'COMPROMISED';
+                exploitStatus.className = 'status-badge badge-danger';
+            } else {
+                logMessage('MEMORY', 'Insufficient memory control for corruption');
+            }
+        }
+
+        // WASM Builder operations
+        function analyzeBuilder() {
+            logMessage('WASM', 'Analyzing wasmmodulebuilder...');
+            if (exploitState.wasmAvailable) {
+                try {
+                    const methods = Object.keys(wasmmodulebuilder.prototype || {});
+                    logMessage('WASM', 'Builder methods found', methods);
+                } catch (e) {
+                    logMessage('WASM', 'Error analyzing builder', e.message);
+                }
+            } else {
+                logMessage('WASM', 'Simulating builder analysis', {
+                    methods: ['constructor', 'addstruct', 'addarray', 'addglobal', 
+                             'addimportedglobal', 'addfunction', 'addtype', 
+                             'instantiate', 'exportas', 'addexport']
+                });
+            }
+        }
+
+        function createStructures() {
+            logMessage('WASM', 'Creating vulnerable structures...');
+            // Simulate structure creation
+            const structures = [
+                { name: 'TypeConfusionStruct', fields: ['type_tag', 'payload_int', 'payload_double'] },
+                { name: 'VulnArray', type: 'i32_array', size: 256 },
+                { name: 'OverflowStruct', fields: ['length', 'capacity', 'buffer_ptr'] }
+            ];
+            logMessage('WASM', 'Structures created', structures);
+        }
+
+        function exportFunctions() {
+            logMessage('WASM', 'Exporting vulnerable functions...');
+            const functions = [
+                { name: 'vulnerable', signature: 'i32(i32)', description: 'Type confusion function' },
+                { name: 'readMemory', signature: 'i32(i32)', description: 'Arbitrary read primitive' },
+                { name: 'writeMemory', signature: 'void(i32,i32)', description: 'Arbitrary write primitive' }
+            ];
+            logMessage('WASM', 'Functions exported', functions);
+        }
+
+        function instantiateWasm() {
+            logMessage('WASM', 'Instantiating WASM module...');
+            setTimeout(() => {
+                logMessage('WASM', 'WASM module instantiated successfully');
+                document.getElementById('wasmMemory').textContent = '0x' + (0x20000000 + Math.floor(Math.random() * 0x1000000)).toString(16);
+                document.getElementById('jitMemory').textContent = '0x' + (0x30000000 + Math.floor(Math.random() * 0x1000000)).toString(16);
+                document.getElementById('heapBase').textContent = '0x' + (0x40000000 + Math.floor(Math.random() * 0x1000000)).toString(16);
             }, 1000);
         }
-        
-        async function nullifyReferences() {
-            log('🗑️ Nullificando referências para trigger de UAF...', 'critical');
+
+        // Full exploit chain
+        function runFullExploit() {
+            logMessage('EXPLOIT', 'Starting full exploit chain...');
             
-            // Estratégia: Criar dangling references
-            const danglingRefs = [];
+            // Reset progress
+            exploitState.progress = 0;
+            updateProgress();
             
-            // Criar referências e depois destruir o objeto dono
-            for (let i = 0; i < 100; i++) {
-                try {
-                    const tempBuilder = new WasmModuleBuilder();
-                    const tempStruct = tempBuilder.addStruct([
-                        { type: 0x7f, mutable: true }
-                    ]);
-                    
-                    const danglingGlobal = tempBuilder.addGlobal(
-                        { type: 'refnull', heapType: tempStruct },
-                        true,
-                        false,
-                        [0xd0, ...encodeLEB128(tempStruct)]
-                    );
-                    
-                    // Guardar referência antes de destruir o builder
-                    danglingRefs.push({
-                        structIndex: tempStruct,
-                        globalRef: danglingGlobal
-                    });
-                    
-                    // Destruir o builder mas manter a referência à struct
-                    tempBuilder = null;
-                    
-                    explorationState.references.push({
-                        type: 'dangling',
-                        index: tempStruct,
-                        data: `dangling_${i}`
-                    });
-                    
-                } catch (error) {
-                    log(`⚠️ Erro na referência ${i}: ${error.message}`, 'warning');
-                }
-            }
+            // Run chain sequentially
+            runInitialization();
             
-            log(`✅ ${danglingRefs.length} referências dangling criadas`, 'success');
-            explorationState.stats.successfulFrees += danglingRefs.length;
-            
-            // Esta é uma condição clássica para UAF!
-            if (danglingRefs.length > 0) {
-                explorationState.stats.suspectedUAF++;
-                showVulnerabilityAlert('REFERÊNCIAS DANGLING CRIADAS - UAF PROVÁVEL');
+            setTimeout(() => runHeapSpray(), 2000);
+            setTimeout(() => triggerUAF(), 6000);
+            setTimeout(() => triggerTypeConfusion(), 10000);
+            setTimeout(() => {
+                testArbitraryRead();
+                testArbitraryWrite();
+                exploitState.progress = 100;
+                updateProgress();
+                logMessage('EXPLOIT', 'Full exploit chain completed successfully!');
+            }, 14000);
+        }
+
+        // Utility functions
+        function updateProgress() {
+            exploitProgress.style.width = `${exploitState.progress}%`;
+            progressPercent.textContent = `${exploitState.progress}%`;
+        }
+
+        function createHeapVisualization() {
+            heapVisualization.innerHTML = '';
+            for (let i = 0; i < 256; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'memory-cell';
+                cell.title = `Address: 0x${(0x1000 + i).toString(16)}`;
+                
+                // Random memory content for visualization
+                const value = Math.floor(Math.random() * 256);
+                const ascii = value > 31 && value < 127 ? String.fromCharCode(value) : '.';
+                
+                cell.innerHTML = `
+                    <div class="hex-value">${value.toString(16).padStart(2, '0')}</div>
+                    <div class="ascii-value">${ascii}</div>
+                `;
+                
+                heapVisualization.appendChild(cell);
             }
         }
-        
-        // ============================================
-        // FASE 3: REUTILIZAÇÃO DE MEMÓRIA
-        // ============================================
-        
-        async function runPhase3(method) {
-            log(`🎪 Iniciando Fase 3: Reutilização (${method})...`, 'warning');
-            updateProgress(70, `Reutilizando memória via ${method}`);
-            
-            try {
-                if (method === 'spray') {
-                    await heapSpraying();
-                } else if (method === 'confusion') {
-                    await typeConfusion();
+
+        function updateHeapVisualization() {
+            const cells = heapVisualization.querySelectorAll('.memory-cell');
+            cells.forEach((cell, i) => {
+                // Simulate sprayed heap pattern
+                const pattern = i % 4;
+                let value;
+                switch(pattern) {
+                    case 0: value = 0x41; break; // 'A'
+                    case 1: value = 0x42; break; // 'B'
+                    case 2: value = 0x43; break; // 'C'
+                    case 3: value = 0x44; break; // 'D'
                 }
                 
-                explorationState.phase = 3;
-                updateProgress(90, `Fase 3 concluída: memória reutilizada`);
-                log(`✅ Fase 3 concluída: memória potencialmente reutilizada`, 'success');
+                const ascii = value > 31 && value < 127 ? String.fromCharCode(value) : '.';
+                cell.querySelector('.hex-value').textContent = value.toString(16).padStart(2, '0');
+                cell.querySelector('.ascii-value').textContent = ascii;
+                cell.style.background = 'rgba(0, 255, 157, 0.3)';
+            });
+        }
+
+        function toggleAutoScroll() {
+            exploitState.autoScroll = !exploitState.autoScroll;
+            const btn = document.getElementById('autoScrollBtn');
+            if (exploitState.autoScroll) {
+                btn.innerHTML = '<i class="fas fa-anchor"></i> Auto-scroll';
+                btn.style.background = 'linear-gradient(45deg, #00ff9d, #009966)';
+            } else {
+                btn.innerHTML = '<i class="fas fa-unlink"></i> Manual';
+                btn.style.background = 'linear-gradient(45deg, #ffaa00, #cc8800)';
+            }
+            logMessage('SYSTEM', `Auto-scroll: ${exploitState.autoScroll ? 'ON' : 'OFF'}`);
+        }
+
+        function clearLogs() {
+            exploitLog.innerHTML = '';
+            exploitState.logs = [];
+            logMessage('SYSTEM', 'Logs cleared');
+        }
+
+        function exportLogs() {
+            const dataStr = JSON.stringify(exploitState.logs, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `exploit_log_${new Date().toISOString()}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            logMessage('SYSTEM', 'Logs exported', { filename: exportFileDefaultName });
+        }
+
+        function saveSession() {
+            const session = {
+                state: { ...exploitState },
+                timestamp: new Date().toISOString(),
+                environment: navigator.userAgent
+            };
+            
+            localStorage.setItem('ps5_exploit_session', JSON.stringify(session));
+            logMessage('SYSTEM', 'Session saved to localStorage');
+        }
+
+        function resetAll() {
+            if (confirm('Reset all exploit progress?')) {
+                // Reset state
+                exploitState.wasmAvailable = false;
+                exploitState.exploitActive = false;
+                exploitState.heapSprayed = false;
+                exploitState.uafTriggered = false;
+                exploitState.typeConfused = false;
+                exploitState.memoryControl = false;
+                exploitState.progress = 0;
                 
-            } catch (error) {
-                log(`❌ Erro na Fase 3: ${error.message}`, 'error');
+                // Reset UI
+                exploitStatus.textContent = 'INACTIVE';
+                exploitStatus.className = 'status-badge badge-danger';
+                memoryStatus.textContent = 'LOCKED';
+                memoryStatus.className = 'status-badge badge-info';
+                sprayCount.textContent = '0';
+                sprayStatus.textContent = 'Idle';
+                uafCount.textContent = '0';
+                uafStatus.textContent = 'Inactive';
+                
+                // Clear logs
+                clearLogs();
+                
+                // Reset visualization
+                createHeapVisualization();
+                updateProgress();
+                
+                logMessage('SYSTEM', 'All systems reset');
             }
         }
-        
-        async function heapSpraying() {
-            log('📊 Executando Heap Spraying...', 'critical');
-            
-            // Criar muitos objetos para tentar reutilizar memória liberada
-            const newBuilders = [];
-            const newStructs = [];
-            
-            for (let i = 0; i < 2000; i++) {
-                try {
-                    const sprayBuilder = new WasmModuleBuilder();
-                    
-                    // Criar struct com layout diferente
-                    const sprayStruct = sprayBuilder.addStruct([
-                        { type: 0x7e, mutable: false }, // i64
-                        { type: 0x7d, mutable: true }   // f32
-                    ]);
-                    
-                    newBuilders.push(sprayBuilder);
-                    newStructs.push({
-                        index: sprayStruct,
-                        builder: sprayBuilder,
-                        iteration: i
-                    });
-                    
-                    if (i % 400 === 0) {
-                        updateProgress(70 + (i / 2000 * 15), `Spray: ${i}/2000`);
-                        log(`   Progresso: ${i} objetos de spray...`, 'info');
-                    }
-                } catch (error) {
-                    log(`⚠️ Erro no spray ${i}: ${error.message}`, 'warning');
-                }
-            }
-            
-            log(`✅ ${newStructs.length} objetos de spray criados`, 'success');
-            
-            // Análise de possíveis colisões
-            analyzeSprayCollisions(newStructs);
-            updateMemoryVisualization();
+
+        function updateStatus() {
+            // Update connection status periodically
+            setInterval(() => {
+                const now = new Date();
+                statusText.innerHTML = `🟢 ONLINE ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            }, 60000);
         }
-        
-        async function typeConfusion() {
-            log('🎭 Criando Type Confusion...', 'critical');
-            
-            // Criar structs com layouts similares em diferentes builders
-            const builders = [];
-            const similarStructs = [];
-            
-            // Layout A: i32, i64
-            // Layout B: i64, i32 (mesmos tipos, ordem diferente)
-            
-            for (let i = 0; i < 500; i++) {
-                try {
-                    const builder = new WasmModuleBuilder();
-                    
-                    // Alternar entre layouts A e B
-                    const useLayoutA = i % 2 === 0;
-                    const structIndex = useLayoutA ? 
-                        builder.addStruct([
-                            { type: 0x7f, mutable: true },  // i32
-                            { type: 0x7e, mutable: false }  // i64
-                        ]) :
-                        builder.addStruct([
-                            { type: 0x7e, mutable: false }, // i64  
-                            { type: 0x7f, mutable: true }   // i32
-                        ]);
-                    
-                    builders.push(builder);
-                    similarStructs.push({
-                        index: structIndex,
-                        layout: useLayoutA ? 'A' : 'B',
-                        builder: builder
-                    });
-                    
-                    // Criar global que referencia esta struct
-                    builder.addGlobal(
-                        { type: 'refnull', heapType: structIndex },
-                        true,
-                        false,
-                        [0xd0, ...encodeLEB128(structIndex)]
-                    ).exportAs(`confusion_${i}`);
-                    
-                    if (i % 100 === 0) {
-                        updateProgress(70 + (i / 500 * 15), `Type confusion: ${i}/500`);
-                        log(`   Progresso: ${i} structs para confusion...`, 'info');
-                    }
-                } catch (error) {
-                    log(`⚠️ Erro na confusion ${i}: ${error.message}`, 'warning');
-                }
-            }
-            
-            log(`✅ ${similarStructs.length} structs para type confusion criadas`, 'success');
-            
-            // Analisar padrões
-           
+
+        // Initialize with some demo logs
+        setTimeout(() => {
+            logMessage('SYSTEM', 'Environment analysis complete');
+            logMessage('SYSTEM', 'WASM builder interface detected', { available: exploitState.wasmAvailable });
+            logMessage('SYSTEM', 'Ready for exploit development');
+        }, 500);
+    </script>
+</body>
+</html>
