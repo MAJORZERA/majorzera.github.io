@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste POC.js - Modificado</title>
+    <title>Teste POC.js</title>
     <style>
         body {
             background-color: white;
@@ -13,7 +13,7 @@
         }
         
         .container {
-            max-width: 1000px;
+            max-width: 800px;
             margin: 0 auto;
         }
         
@@ -21,6 +21,7 @@
             color: #333;
             border-bottom: 2px solid #eee;
             padding-bottom: 10px;
+            margin-bottom: 20px;
         }
         
         button {
@@ -41,29 +42,6 @@
         button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
-        }
-        
-        button.secondary {
-            background-color: #2196F3;
-        }
-        
-        button.secondary:hover {
-            background-color: #0b7dda;
-        }
-        
-        button.danger {
-            background-color: #f44336;
-        }
-        
-        button.danger:hover {
-            background-color: #da190b;
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin: 20px 0;
         }
         
         #status {
@@ -99,25 +77,16 @@
             margin-top: 20px;
             white-space: pre-wrap;
             font-family: 'Courier New', monospace;
-            font-size: 13px;
-            max-height: 500px;
+            font-size: 14px;
+            max-height: 400px;
             overflow-y: auto;
             min-height: 100px;
-        }
-        
-        pre {
-            background-color: #f4f4f4;
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
-            margin: 10px 0;
-            font-size: 12px;
         }
         
         .notes {
             background-color: #e7f3fe;
             border-left: 4px solid #2196F3;
-            padding: 15px;
+            padding: 12px;
             margin: 20px 0;
         }
         
@@ -125,176 +94,52 @@
             margin-top: 0;
             color: #0c5460;
         }
-        
-        .code-fixes {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid #ddd;
-            margin: 20px 0;
-        }
-        
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border: 1px solid transparent;
-            border-bottom: none;
-            margin-bottom: -1px;
-        }
-        
-        .tab.active {
-            background-color: white;
-            border-color: #ddd;
-            border-radius: 5px 5px 0 0;
-            font-weight: bold;
-        }
-        
-        .tab-content {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 5px 5px;
-            background-color: white;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .patch-preview {
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .info-box {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 15px;
-            margin: 15px 0;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Teste POC.js - Ambiente de Navegador</h1>
+        <h1>Teste POC.js</h1>
         
         <div class="notes">
-            <h3>⚠️ Problemas Identificados:</h3>
-            <p>O código original usa funções específicas do JavaScriptCore que <strong>não existem em navegadores</strong>:</p>
-            <ul>
-                <li><code>load()</code> - Para carregar arquivos (apenas no JSC)</li>
-                <li><code>gc()</code> - Coleta de lixo manual (apenas no JSC)</li>
-                <li><code>print()</code> - Para output (use <code>console.log()</code> no navegador)</li>
-            </ul>
+            <h3>⚠️ Observações:</h3>
+            <p>Este código usa funções específicas do JavaScriptCore que podem não funcionar em navegadores.</p>
         </div>
         
-        <div class="button-group">
-            <button id="runOriginal" onclick="runOriginal()">Executar Original</button>
-            <button id="runPatched" onclick="runPatched()" class="secondary">Executar com Correções</button>
-            <button id="clearLogs" onclick="clearLogs()" class="danger">Limpar Logs</button>
-        </div>
+        <button id="runButton" onclick="runPoc()">Executar POC.js</button>
         
         <div id="status"></div>
         
-        <div class="tabs">
-            <div class="tab active" onclick="showTab('console')">Console Output</div>
-            <div class="tab" onclick="showTab('patches')">Correções Aplicadas</div>
-            <div class="tab" onclick="showTab('code')">Código Original</div>
-        </div>
-        
-        <div id="console-tab" class="tab-content active">
-            <h3>Saída do Console:</h3>
-            <div id="output">Clique em um botão para executar...</div>
-        </div>
-        
-        <div id="patches-tab" class="tab-content">
-            <h3>Correções Necessárias:</h3>
-            <div class="info-box">
-                <p>Para executar no navegador, precisamos substituir:</p>
-                <ol>
-                    <li><code>load()</code> → Carregamento via fetch() + eval()</li>
-                    <li><code>gc()</code> → Tentativa de forçar GC (limitada)</li>
-                    <li><code>print()</code> → <code>console.log()</code></li>
-                    <li>Verificar APIs WebAssembly suportadas</li>
-                </ol>
-            </div>
-            
-            <div class="patch-preview" id="patchPreview">
-                // As correções serão exibidas aqui após execução
-            </div>
-        </div>
-        
-        <div id="code-tab" class="tab-content">
-            <h3>Código Original (primeiras 1500 linhas):</h3>
-            <pre><code id="codePreview">Carregando...</code></pre>
-        </div>
+        <h3>Saída do Console:</h3>
+        <div id="output">Clique no botão para executar o código...</div>
     </div>
 
     <script>
-        // Estado global
-        let originalPocCode = '';
-        let patchesApplied = [];
-        
-        // Configurar captura de logs
+        // Capturar logs
         const outputDiv = document.getElementById('output');
         let logs = [];
         
-        function setupConsoleCapture() {
-            const originalLog = console.log;
-            const originalError = console.error;
-            const originalWarn = console.warn;
-            const originalInfo = console.info;
-            
-            console.log = function(...args) {
-                originalLog.apply(console, args);
-                const message = args.map(arg => 
-                    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-                ).join(' ');
-                logs.push('[LOG] ' + message);
-                updateOutput();
-            };
-            
-            console.error = function(...args) {
-                originalError.apply(console, args);
-                const message = args.map(arg => 
-                    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-                ).join(' ');
-                logs.push('[ERRO] ' + message);
-                updateOutput();
-            };
-            
-            console.warn = function(...args) {
-                originalWarn.apply(console, args);
-                const message = args.map(arg => 
-                    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-                ).join(' ');
-                logs.push('[AVISO] ' + message);
-                updateOutput();
-            };
-            
-            console.info = function(...args) {
-                originalInfo.apply(console, args);
-                const message = args.map(arg => 
-                    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-                ).join(' ');
-                logs.push('[INFO] ' + message);
-                updateOutput();
-            };
-        }
+        // Substituir funções do console para capturar output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logs.push('[LOG] ' + args.join(' '));
+            updateOutput();
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            logs.push('[ERRO] ' + args.join(' '));
+            updateOutput();
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            logs.push('[AVISO] ' + args.join(' '));
+            updateOutput();
+        };
         
         function updateOutput() {
             outputDiv.textContent = logs.join('\n');
@@ -304,7 +149,6 @@
         function clearLogs() {
             logs = [];
             updateOutput();
-            hideStatus();
         }
         
         function showStatus(message, type) {
@@ -318,305 +162,134 @@
             document.getElementById('status').style.display = 'none';
         }
         
-        function showTab(tabName) {
-            // Esconder todas as tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Mostrar tab selecionada
-            document.getElementById(tabName + '-tab').classList.add('active');
-            document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
-        }
-        
-        // Funções de emulação para o ambiente do navegador
-        function createBrowserCompatibilityLayer() {
-            patchesApplied = [];
-            
-            // Emular load() - função específica do JSC
+        // Emular funções faltantes do JavaScriptCore
+        function setupCompatibility() {
+            // Emular load() se não existir
             if (typeof load === 'undefined') {
                 window.load = function(filename) {
-                    console.log(`[EMULAÇÃO] load() chamado para: ${filename}`);
-                    patchesApplied.push(`load("${filename}") → fetch() + eval()`);
+                    console.log(`[EMULAÇÃO] Tentando carregar: ${filename}`);
                     
                     return new Promise(async (resolve, reject) => {
                         try {
                             const response = await fetch(filename);
                             if (!response.ok) {
-                                throw new Error(`Falha ao carregar ${filename}: ${response.status}`);
+                                throw new Error(`Arquivo não encontrado: ${filename}`);
                             }
                             const code = await response.text();
                             eval(code);
-                            console.log(`[EMULAÇÃO] ${filename} carregado e executado`);
+                            console.log(`[EMULAÇÃO] ${filename} carregado`);
                             resolve();
                         } catch (error) {
-                            console.error(`[EMULAÇÃO] Erro ao carregar ${filename}:`, error.message);
+                            console.error(`[EMULAÇÃO] Falha ao carregar ${filename}:`, error.message);
                             reject(error);
                         }
                     });
                 };
-                patchesApplied.push('Função load() criada (emulação fetch + eval)');
             }
             
-            // Emular gc() - coleta de lixo manual (limitada no navegador)
+            // Emular gc() se não existir
             if (typeof gc === 'undefined') {
                 window.gc = function() {
-                    console.log('[EMULAÇÃO] gc() chamado - tentando forçar coleta de lujo');
-                    patchesApplied.push('gc() → Tentativa de forçar garbage collection');
-                    
-                    // Tentativas de forçar GC (funciona em alguns navegadores)
+                    console.log('[EMULAÇÃO] Coleta de lixo solicitada');
+                    // Tentar forçar garbage collection
                     if (window.gc) {
-                        return window.gc(); // Se já existir (Chrome com flag --js-flags="--expose-gc")
+                        return window.gc();
                     }
-                    
-                    // Alternativa: criar e descartar muitos objetos
-                    for (let i = 0; i < 10000; i++) {
-                        let obj = {};
-                        obj.self = obj; // Referência circular
-                    }
-                    
-                    // Forçar garbage collection (funciona no Chrome com flag específica)
-                    if (window.PerformanceObserver) {
-                        try {
+                    // Método alternativo
+                    try {
+                        if (window.PerformanceObserver) {
                             new PerformanceObserver(() => {}).observe({type: 'gc'});
-                        } catch (e) {}
-                    }
-                    
-                    console.log('[EMULAÇÃO] Coleta de lixo solicitada (efetividade limitada)');
+                        }
+                    } catch (e) {}
                 };
-                patchesApplied.push('Função gc() criada (emulação limitada)');
             }
             
-            // Emular print() se necessário
+            // Emular print() se não existir
             if (typeof print === 'undefined') {
                 window.print = function(...args) {
                     console.log('[PRINT]', ...args);
-                    patchesApplied.push('print() → console.log()');
                 };
             }
-            
-            // Verificar WebAssembly support
-            if (typeof WebAssembly === 'undefined') {
-                console.error('[ERRO CRÍTICO] WebAssembly não suportado neste navegador');
-                patchesApplied.push('WebAssembly não disponível');
-                return false;
-            }
-            
-            // Verificar APIs WebAssembly específicas
-            const wasmFeatures = {
-                gc: false,
-                bulkMemory: false,
-                referenceTypes: false,
-                simd: false
-            };
-            
-            // Testar funcionalidades (simplificado)
-            try {
-                // Testar referência types
-                const testModule = new WebAssembly.Module(new Uint8Array([
-                    0x00, 0x61, 0x73, 0x6d, // magic
-                    0x01, 0x00, 0x00, 0x00, // version
-                ]));
-                // Tentativas de detecção simplificadas
-                wasmFeatures.referenceTypes = WebAssembly.Global !== undefined;
-            } catch (e) {
-                console.warn('[AVISO] Algumas features WebAssembly podem não estar disponíveis');
-            }
-            
-            patchesApplied.push(`WebAssembly disponível: GC=${wasmFeatures.gc}, RefTypes=${wasmFeatures.referenceTypes}`);
-            return true;
         }
         
-        // Carregar e preparar o código
-        async function loadPocCode() {
-            try {
-                const response = await fetch('poc.js');
-                if (!response.ok) {
-                    throw new Error(`Falha ao carregar poc.js: ${response.status}`);
-                }
-                originalPocCode = await response.text();
-                
-                // Atualizar preview do código
-                const preview = document.getElementById('codePreview');
-                preview.textContent = originalPocCode.substring(0, 2000) + 
-                    (originalPocCode.length > 2000 ? '\n\n[... código truncado ...]' : '');
-                
-                return true;
-            } catch (error) {
-                console.error('Erro ao carregar poc.js:', error);
-                showStatus('Erro ao carregar poc.js: ' + error.message, 'error');
-                return false;
-            }
-        }
-        
-        // Executar código original (provavelmente falhará)
-        async function runOriginal() {
-            const button = document.getElementById('runOriginal');
+        async function runPoc() {
+            const button = document.getElementById('runButton');
             button.disabled = true;
             button.textContent = 'Executando...';
             
             clearLogs();
             hideStatus();
-            logs = [];
             
-            console.log('🚀 Executando código ORIGINAL (provavelmente falhará)...');
-            console.log('📅 Início: ' + new Date().toLocaleTimeString());
-            
-            if (!await loadPocCode()) {
-                button.disabled = false;
-                button.textContent = 'Executar Original';
-                return;
-            }
+            console.log('🚀 Iniciando execução do POC.js...');
+            console.log('📅 ' + new Date().toLocaleString());
             
             try {
-                // Criar camada de compatibilidade básica
-                createBrowserCompatibilityLayer();
+                // Configurar compatibilidade
+                setupCompatibility();
                 
-                // Executar o código original (talvez funcione com as emulações)
-                eval(originalPocCode);
-                
-                console.log('✅ Código original executado (com emulações)');
-                showStatus('Execução concluída com emulações', 'success');
-            } catch (error) {
-                console.error('💥 ERRO na execução:', error.message);
-                console.error('Stack trace:', error.stack);
-                showStatus('Erro: ' + error.message, 'error');
-            } finally {
-                button.disabled = false;
-                button.textContent = 'Executar Original';
-                console.log('🏁 Execução finalizada: ' + new Date().toLocaleTimeString());
-                
-                // Atualizar preview de patches
-                document.getElementById('patchPreview').textContent = 
-                    patchesApplied.join('\n') || 'Nenhuma correção aplicada';
-            }
-        }
-        
-        // Executar código com correções manuais
-        async function runPatched() {
-            const button = document.getElementById('runPatched');
-            button.disabled = true;
-            button.textContent = 'Executando...';
-            
-            clearLogs();
-            hideStatus();
-            logs = [];
-            patchesApplied = [];
-            
-            console.log('🔧 Executando código COM CORREÇÕES...');
-            console.log('📅 Início: ' + new Date().toLocaleTimeString());
-            
-            if (!await loadPocCode()) {
-                button.disabled = false;
-                button.textContent = 'Executar com Correções';
-                return;
-            }
-            
-            try {
-                // Criar camada de compatibilidade
-                createBrowserCompatibilityLayer();
-                
-                // Aplicar correções específicas
-                let patchedCode = originalPocCode;
-                
-                // 1. Substituir load() por carregamento assíncrono
-                if (patchedCode.includes('load("wasm-module-builder.js")')) {
-                    console.log('🔨 Aplicando correção para load()...');
-                    patchedCode = patchedCode.replace(
-                        'load("wasm-module-builder.js");',
-                        `// load() substituído por fetch()
-(async function() {
-    try {
-        const response = await fetch('wasm-module-builder.js');
-        const code = await response.text();
-        eval(code);
-        console.log('wasm-module-builder.js carregado com sucesso');
-    } catch (e) {
-        console.error('Falha ao carregar wasm-module-builder.js:', e);
-        throw e;
-    }
-})();`
-                    );
-                    patchesApplied.push('load("wasm-module-builder.js") substituído por fetch assíncrono');
-                }
-                
-                // 2. Substituir print() por console.log()
-                patchedCode = patchedCode.replace(/print\(/g, 'console.log(');
-                if (originalPocCode.includes('print(')) {
-                    patchesApplied.push('print() substituído por console.log()');
-                }
-                
-                // 3. Adicionar verificações de WebAssembly
-                if (patchedCode.includes('new WasmModuleBuilder')) {
-                    patchedCode = `// Verificação inicial de WebAssembly
-if (typeof WebAssembly === 'undefined') {
-    console.error('WebAssembly não suportado');
-    throw new Error('WebAssembly required');
-}
-
-// Verificar WebAssembly.Global para referências
-if (typeof WebAssembly.Global === 'undefined') {
-    console.warn('WebAssembly.Global não disponível - referência types podem falhar');
-}
-
-${patchedCode}`;
-                    patchesApplied.push('Verificações de WebAssembly adicionadas');
-                }
-                
-                console.log('✅ Código corrigido aplicado');
-                console.log('📝 Patches aplicados:', patchesApplied.length);
-                
-                // Executar código corrigido
-                eval(patchedCode);
-                
-                console.log('✅ Código corrigido executado');
-                showStatus('Execução com correções concluída', 'success');
-            } catch (error) {
-                console.error('💥 ERRO na execução corrigida:', error.message);
-                console.error('Stack trace:', error.stack);
-                showStatus('Erro: ' + error.message, 'error');
-            } finally {
-                button.disabled = false;
-                button.textContent = 'Executar com Correções';
-                console.log('🏁 Execução finalizada: ' + new Date().toLocaleTimeString());
-                
-                // Atualizar preview de patches
-                document.getElementById('patchPreview').textContent = 
-                    patchesApplied.join('\n') || 'Nenhuma correção aplicada';
-            }
-        }
-        
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', async function() {
-            setupConsoleCapture();
-            
-            // Verificar se os arquivos existem
-            try {
+                // Verificar se o arquivo existe
                 const response = await fetch('poc.js');
                 if (!response.ok) {
-                    outputDiv.textContent = '❌ ERRO: Arquivo poc.js não encontrado!\n\nColoque este arquivo HTML na mesma pasta que:\n1. poc.js\n2. wasm-module-builder.js (opcional)\n\nO código foi projetado para JavaScriptCore, não para navegadores.';
-                } else {
-                    console.log('✅ poc.js encontrado');
-                    await loadPocCode();
+                    throw new Error(`Arquivo poc.js não encontrado (status: ${response.status})`);
                 }
+                
+                const pocCode = await response.text();
+                console.log('✅ poc.js carregado (' + pocCode.length + ' bytes)');
+                
+                // Tentar carregar wasm-module-builder.js se mencionado
+                if (pocCode.includes('wasm-module-builder.js')) {
+                    console.log('🔍 Detectada referência a wasm-module-builder.js');
+                    
+                    try {
+                        const builderResponse = await fetch('wasm-module-builder.js');
+                        if (builderResponse.ok) {
+                            const builderCode = await builderResponse.text();
+                            console.log('✅ wasm-module-builder.js carregado');
+                            
+                            // Executar o builder primeiro
+                            eval(builderCode);
+                            console.log('✅ Dependências carregadas');
+                        } else {
+                            console.warn('⚠️ wasm-module-builder.js não encontrado');
+                            console.warn('⚠️ Algumas funcionalidades podem não estar disponíveis');
+                        }
+                    } catch (builderError) {
+                        console.warn('⚠️ Erro ao carregar dependências:', builderError.message);
+                    }
+                }
+                
+                // Executar o código principal
+                console.log('⚡ Executando código principal...');
+                eval(pocCode);
+                
+                console.log('✅ Execução concluída com sucesso!');
+                showStatus('Execução concluída!', 'success');
+                
             } catch (error) {
-                outputDiv.textContent = '❌ ERRO: Não foi possível verificar os arquivos.\n' + error.message;
+                console.error('💥 ERRO durante execução:', error.message);
+                console.error('Stack trace:', error.stack);
+                showStatus('Erro: ' + error.message, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Executar POC.js';
+                console.log('🏁 Fim da execução');
             }
-            
-            // Verificar wasm-module-builder.js
-            fetch('wasm-module-builder.js')
+        }
+        
+        // Verificar se o arquivo existe ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('poc.js')
                 .then(response => {
-                    if (response.ok) {
-                        console.log('✅ wasm-module-builder.js encontrado');
-                    } else {
-                        console.warn('⚠️ wasm-module-builder.js não encontrado - algumas funcionalidades podem faltar');
+                    if (!response.ok) {
+                        outputDiv.textContent = 
+                            '❌ ERRO: Arquivo poc.js não encontrado!\n\n' +
+                            'Certifique-se de que este arquivo HTML está na mesma pasta que:\n' +
+                            '1. poc.js\n' +
+                            '2. wasm-module-builder.js (opcional)';
                     }
                 })
                 .catch(() => {
-                    console.warn('⚠️ Não foi possível verificar wasm-module-builder.js');
+                    outputDiv.textContent = '❌ Não foi possível verificar os arquivos.';
                 });
         });
     </script>
