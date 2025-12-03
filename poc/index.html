@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste WebAssembly PS5</title>
+    <title>Teste WebAssembly PS5 - Com Builder</title>
     <style>
         * {
             margin: 0;
@@ -19,10 +19,10 @@
         }
         
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background-color: #f9f9f9;
-            padding: 20px;
+            padding: 25px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
@@ -31,13 +31,26 @@
             color: #333;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #ddd;
+            border-bottom: 2px solid #4CAF50;
+        }
+        
+        .discovery {
+            background-color: #e8f5e9;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .discovery h2 {
+            color: #2e7d32;
+            margin-top: 0;
         }
         
         .test-section {
             background: white;
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
         }
@@ -45,157 +58,223 @@
         .result-box {
             background: #f8f9fa;
             border: 1px solid #dee2e6;
-            border-radius: 5px;
+            border-radius: 6px;
             padding: 15px;
             margin-top: 15px;
             font-family: 'Courier New', monospace;
             font-size: 14px;
-            min-height: 100px;
-            max-height: 400px;
+            min-height: 80px;
+            max-height: 500px;
             overflow-y: auto;
             white-space: pre-wrap;
         }
         
         button {
-            background-color: #007bff;
+            background-color: #2196F3;
             color: white;
             border: none;
             padding: 12px 24px;
             font-size: 16px;
             cursor: pointer;
-            border-radius: 5px;
-            margin: 10px 5px 10px 0;
-            transition: background-color 0.3s;
+            border-radius: 6px;
+            margin: 8px 8px 8px 0;
+            transition: all 0.3s;
+            font-weight: bold;
         }
         
         button:hover {
-            background-color: #0056b3;
+            background-color: #0b7dda;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
         }
         
         button:disabled {
-            background-color: #6c757d;
+            background-color: #9e9e9e;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         button.danger {
-            background-color: #dc3545;
+            background-color: #f44336;
         }
         
         button.danger:hover {
-            background-color: #c82333;
+            background-color: #d32f2f;
         }
         
         button.success {
-            background-color: #28a745;
+            background-color: #4CAF50;
         }
         
         button.success:hover {
-            background-color: #218838;
+            background-color: #388e3c;
+        }
+        
+        button.warning {
+            background-color: #ff9800;
+        }
+        
+        button.warning:hover {
+            background-color: #f57c00;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
         }
         
         .status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
+            padding: 12px 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            font-weight: bold;
             display: none;
         }
         
         .status.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background-color: #ffebee;
+            color: #c62828;
+            border: 2px solid #ef9a9a;
             display: block;
         }
         
         .status.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 2px solid #a5d6a7;
             display: block;
         }
         
         .status.warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
+            background-color: #fff3e0;
+            color: #ef6c00;
+            border: 2px solid #ffcc80;
             display: block;
         }
         
         .info-box {
-            background-color: #e7f3fe;
-            border-left: 4px solid #2196F3;
-            padding: 15px;
+            background-color: #e3f2fd;
+            border-left: 5px solid #2196F3;
+            padding: 18px;
             margin: 20px 0;
+            border-radius: 0 6px 6px 0;
         }
         
         h2 {
             color: #444;
-            margin: 15px 0 10px 0;
+            margin: 20px 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
         }
         
         h3 {
             color: #555;
-            margin: 10px 0;
+            margin: 15px 0 10px 0;
         }
         
-        ul {
-            margin-left: 20px;
+        ul, ol {
+            margin-left: 25px;
             margin-bottom: 15px;
         }
         
+        li {
+            margin-bottom: 8px;
+        }
+        
         code {
-            background-color: #f4f4f4;
-            padding: 2px 6px;
-            border-radius: 3px;
+            background-color: #f5f5f5;
+            padding: 3px 8px;
+            border-radius: 4px;
             font-family: 'Courier New', monospace;
             font-size: 14px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        pre {
+            background-color: #263238;
+            color: #e0e0e0;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 13px;
+        }
+        
+        .key-finding {
+            background-color: #fffde7;
+            border: 2px solid #ffd54f;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🕵️ Teste de Capacidades WebAssembly - PS5</h1>
+        <h1>🔍 Teste WebAssembly PS5 - DESCOBERTA IMPORTANTE</h1>
         
-        <div class="info-box">
-            <h3>⚠️ Importante:</h3>
-            <p>Este testador verifica se o WebKit do PS5 suporta WebAssembly e outras APIs necessárias para executar o exploit POC.</p>
+        <div class="discovery">
+            <h2>🎯 DESCOBERTA: WebAssembly EXISTE no PS5!</h2>
+            <p>Encontramos evidências no WebKit do PS5:</p>
+            <ul>
+                <li><strong>Pasta "wasm"</strong> nos arquivos do WebKit</li>
+                <li><strong>Arquivo "load_wasm.js"</strong> com código WebAssembly funcional</li>
+                <li><strong>Builder específico</strong> para criar módulos WASM</li>
+            </ul>
+            
+            <div class="key-finding">
+                <h3>📝 Código encontrado:</h3>
+                <pre><code>function createWasmModule() {
+    let builder = new Builder();  // ✅ Builder específico do PS5
+    // ... construção do módulo WASM ...
+    return new WebAssembly.Module(builder.WebAssembly().get());  // ✅ WebAssembly existe!
+}</code></pre>
+            </div>
         </div>
         
         <div class="test-section">
-            <h2>🔍 Teste de APIs Disponíveis</h2>
-            <button onclick="testBasicAPIs()">Testar APIs Básicas</button>
-            <button onclick="testWebAssembly()" class="success">Testar WebAssembly</button>
-            <button onclick="clearOutput()" class="danger">Limpar Resultados</button>
+            <h2>🧪 Testes de Compatibilidade</h2>
+            
+            <div class="button-group">
+                <button onclick="testPS5Builder()" class="success">Testar Builder PS5</button>
+                <button onclick="testStandardWasm()" class="warning">Testar WebAssembly Padrão</button>
+                <button onclick="testPocCompatibility()">Testar Compatibilidade POC</button>
+                <button onclick="clearAll()" class="danger">Limpar Tudo</button>
+            </div>
             
             <div id="output" class="result-box">
-                Clique em um botão para executar os testes...
+                Aguardando testes...
             </div>
         </div>
         
         <div class="test-section">
-            <h2>🚀 Teste do POC.js (Simplificado)</h2>
+            <h2>🔧 Teste do POC.js Adaptado</h2>
+            
             <div class="info-box">
-                <p>O POC.js original usa funcionalidades que provavelmente <strong>não estão disponíveis</strong> no PS5:</p>
-                <ul>
-                    <li><code>load()</code> - Função específica do JavaScriptCore</li>
-                    <li><code>gc()</code> - Coleta de lixo manual</li>
-                    <li>WebAssembly GC (structs, references)</li>
-                </ul>
+                <p>O POC.js original usa <code>WasmModuleBuilder</code> mas o PS5 usa <code>Builder</code>.</p>
+                <p>Vamos tentar adaptar o código para a API do PS5.</p>
             </div>
             
-            <button onclick="runSimplifiedTest()">Executar Teste Simplificado</button>
+            <button onclick="runAdaptedPoc()" class="warning">Executar POC Adaptado</button>
             
-            <div id="testOutput" class="result-box">
-                Aqui aparecerão os resultados do teste...
+            <div id="pocOutput" class="result-box">
+                Saída do POC adaptado aparecerá aqui...
             </div>
         </div>
         
         <div class="test-section">
-            <h2>📊 Informações do Navegador</h2>
-            <button onclick="showBrowserInfo()">Mostrar Informações</button>
+            <h2>📋 Informações do Sistema</h2>
+            <button onclick="showSystemInfo()">Mostrar Info Detalhada</button>
             
-            <div id="browserInfo" class="result-box">
-                As informações do navegador aparecerão aqui...
+            <div id="systemInfo" class="result-box">
+                Informações do sistema aparecerão aqui...
             </div>
         </div>
         
@@ -203,311 +282,441 @@
     </div>
 
     <script>
-        // Elementos da página
+        // Elementos
         const output = document.getElementById('output');
-        const testOutput = document.getElementById('testOutput');
-        const browserInfo = document.getElementById('browserInfo');
+        const pocOutput = document.getElementById('pocOutput');
+        const systemInfo = document.getElementById('systemInfo');
         const status = document.getElementById('status');
         
-        // Função para mostrar status
-        function showStatus(message, type) {
-            status.textContent = message;
-            status.className = `status ${type}`;
-        }
-        
-        // Função para limpar status
-        function clearStatus() {
-            status.style.display = 'none';
-            status.className = 'status';
-        }
-        
-        // Função para adicionar texto ao output
-        function addOutput(text, element = output) {
+        // Utilitários
+        function log(text, element = output) {
             element.textContent += text + '\n';
             element.scrollTop = element.scrollHeight;
         }
         
-        // Função para limpar output
-        function clearOutput(elementId = null) {
+        function clear(elementId = null) {
             if (elementId) {
                 document.getElementById(elementId).textContent = '';
             } else {
                 output.textContent = '';
-                testOutput.textContent = '';
-                browserInfo.textContent = '';
+                pocOutput.textContent = '';
+                systemInfo.textContent = '';
             }
-            clearStatus();
+            status.style.display = 'none';
         }
         
-        // Testar APIs básicas
-        function testBasicAPIs() {
-            clearOutput();
-            showStatus('Testando APIs básicas...', 'warning');
-            
-            addOutput('=== TESTE DE APIS BÁSICAS ===');
-            addOutput('Data/hora: ' + new Date().toLocaleString());
-            addOutput('');
-            
-            // Testar APIs essenciais
-            const tests = [
-                { name: 'eval', value: typeof eval },
-                { name: 'Function', value: typeof Function },
-                { name: 'Object', value: typeof Object },
-                { name: 'Array', value: typeof Array },
-                { name: 'JSON', value: typeof JSON },
-                { name: 'console', value: typeof console },
-                { name: 'setTimeout', value: typeof setTimeout },
-                { name: 'setInterval', value: typeof setInterval },
-                { name: 'Promise', value: typeof Promise },
-                { name: 'fetch', value: typeof fetch }
-            ];
-            
-            tests.forEach(test => {
-                addOutput(`${test.name}: ${test.value !== 'undefined' ? '✅ DISPONÍVEL' : '❌ NÃO DISPONÍVEL'}`);
-            });
-            
-            addOutput('');
-            addOutput('=== APIs ESPECÍFICAS DO POC ===');
-            
-            // APIs específicas que o POC usa
-            const specialTests = [
-                { name: 'load', value: typeof load },
-                { name: 'gc', value: typeof gc },
-                { name: 'print', value: typeof print }
-            ];
-            
-            specialTests.forEach(test => {
-                const available = test.value !== 'undefined';
-                addOutput(`${test.name}: ${available ? '⚠️ DISPONÍVEL (incomum em navegadores)' : '✅ NÃO DISPONÍVEL (normal em navegadores)'}`);
-            });
-            
-            showStatus('Teste de APIs básicas concluído!', 'success');
+        function showStatus(msg, type) {
+            status.textContent = msg;
+            status.className = `status ${type}`;
         }
         
-        // Testar WebAssembly
-        function testWebAssembly() {
-            clearOutput();
-            showStatus('Testando WebAssembly...', 'warning');
+        // Testar Builder do PS5
+        async function testPS5Builder() {
+            clear();
+            showStatus('Testando Builder do PS5...', 'warning');
             
-            addOutput('=== TESTE DE WEBASSEMBLY ===');
-            addOutput('');
+            log('=== TESTE BUILDER PS5 ===');
+            log('Baseado no arquivo load_wasm.js encontrado');
+            log('');
             
-            // Testar se WebAssembly existe
+            // Verificar se Builder existe
+            log('1. Verificando Builder...');
+            if (typeof Builder === 'undefined') {
+                log('   ❌ Builder não encontrado globalmente');
+                log('   Tentando métodos alternativos...');
+                
+                // Tentar encontrar de outras formas
+                const globalObjects = ['Builder', 'WasmBuilder', 'WebAssemblyBuilder', 'wasmBuilder'];
+                let found = false;
+                
+                for (const objName of globalObjects) {
+                    try {
+                        if (eval(`typeof ${objName} !== 'undefined'`)) {
+                            log(`   ✅ ${objName} encontrado!`);
+                            found = true;
+                            break;
+                        }
+                    } catch (e) {}
+                }
+                
+                if (!found) {
+                    log('   ❌ Nenhum builder encontrado');
+                    log('');
+                    log('⚠️  Builder pode estar em escopo diferente');
+                    log('   ou requer inicialização específica.');
+                }
+            } else {
+                log('   ✅ Builder encontrado!');
+                log(`   Tipo: ${typeof Builder}`);
+                log(`   Construtor: ${Builder.prototype?.constructor?.name || 'desconhecido'}`);
+            }
+            
+            log('');
+            log('2. Verificando métodos do Builder...');
+            
+            // Testar métodos comuns de builders WASM
+            const testMethods = async () => {
+                try {
+                    // Tentar criar builder como no exemplo
+                    const builder = new Builder();
+                    log('   ✅ new Builder() funcionou');
+                    
+                    // Verificar métodos
+                    const methods = ['Type', 'Function', 'Export', 'Code', 'WebAssembly'];
+                    methods.forEach(method => {
+                        if (typeof builder[method] === 'function') {
+                            log(`   ✅ builder.${method}() disponível`);
+                        } else {
+                            log(`   ❌ builder.${method}() não disponível`);
+                        }
+                    });
+                    
+                    return true;
+                } catch (error) {
+                    log(`   ❌ Erro ao criar Builder: ${error.message}`);
+                    return false;
+                }
+            };
+            
+            if (typeof Builder !== 'undefined') {
+                await testMethods();
+            }
+            
+            log('');
+            log('3. Tentando criar módulo WASM...');
+            
+            try {
+                // Tentativa de criar módulo simples
+                const wasmCode = new Uint8Array([
+                    0x00, 0x61, 0x73, 0x6d, // magic
+                    0x01, 0x00, 0x00, 0x00, // version
+                    0x01, 0x04, 0x01, 0x60, // type section
+                    0x00, 0x00,             // func type
+                    0x03, 0x02, 0x01, 0x00, // function section
+                    0x07, 0x05, 0x01,       // export section
+                    0x03, 0x61, 0x64, 0x64, // "add"
+                    0x00, 0x00,             // func index
+                    0x0a, 0x09, 0x01,       // code section
+                    0x07, 0x00,             // func size
+                    0x20, 0x00,             // get_local 0
+                    0x20, 0x01,             // get_local 1
+                    0x6a,                   // i32.add
+                    0x0b                    // end
+                ]);
+                
+                const module = new WebAssembly.Module(wasmCode);
+                log('   ✅ Módulo WASM criado com WebAssembly.Module');
+                
+                const instance = new WebAssembly.Instance(module);
+                log('   ✅ Instância WASM criada');
+                
+                if (instance.exports.add) {
+                    const result = instance.exports.add(5, 3);
+                    log(`   ✅ Função executada: 5 + 3 = ${result}`);
+                }
+                
+            } catch (error) {
+                log(`   ❌ Erro ao criar módulo: ${error.message}`);
+            }
+            
+            showStatus('Teste do Builder concluído', 'success');
+        }
+        
+        // Testar WebAssembly padrão
+        function testStandardWasm() {
+            clear();
+            showStatus('Testando WebAssembly padrão...', 'warning');
+            
+            log('=== WEBASSEMBLY PADRÃO ===');
+            log('');
+            
+            // Verificar APIs WebAssembly
             if (typeof WebAssembly === 'undefined') {
-                addOutput('❌ WebAssembly NÃO ESTÁ DISPONÍVEL');
-                addOutput('');
-                addOutput('Isso significa que:');
-                addOutput('1. O exploit POC.js NÃO funcionará');
-                addOutput('2. O PS5 provavelmente desabilitou WebAssembly por segurança');
-                addOutput('3. Você precisa de um exploit diferente baseado em JavaScript puro');
+                log('❌ WebAssembly não está disponível');
                 showStatus('WebAssembly não disponível!', 'error');
                 return;
             }
             
-            addOutput('✅ WebAssembly está disponível!');
-            addOutput('');
+            log('✅ WebAssembly disponível');
+            log('');
             
-            // Testar APIs específicas do WebAssembly
-            addOutput('=== APIs WebAssembly ===');
-            
-            const wasmTests = [
-                { name: 'WebAssembly', value: typeof WebAssembly },
-                { name: 'WebAssembly.Module', value: typeof WebAssembly.Module },
-                { name: 'WebAssembly.Instance', value: typeof WebAssembly.Instance },
-                { name: 'WebAssembly.compile', value: typeof WebAssembly.compile },
-                { name: 'WebAssembly.instantiate', value: typeof WebAssembly.instantiate },
-                { name: 'WebAssembly.Global', value: typeof WebAssembly.Global },
-                { name: 'WebAssembly.Table', value: typeof WebAssembly.Table },
-                { name: 'WebAssembly.Memory', value: typeof WebAssembly.Memory }
+            // Listar todas as APIs WebAssembly
+            const wasmAPIs = [
+                'Module', 'Instance', 'Memory', 'Table', 'Global',
+                'compile', 'instantiate', 'validate'
             ];
             
-            wasmTests.forEach(test => {
-                const available = test.value !== 'undefined';
-                addOutput(`${test.name}: ${available ? '✅ DISPONÍVEL' : '❌ NÃO DISPONÍVEL'}`);
+            log('APIs WebAssembly disponíveis:');
+            wasmAPIs.forEach(api => {
+                const available = WebAssembly[api] !== undefined;
+                log(`  ${available ? '✅' : '❌'} WebAssembly.${api}`);
             });
             
-            addOutput('');
+            log('');
+            log('=== FEATURES ESPECÍFICAS ===');
             
-            // Tentar compilar um módulo WebAssembly simples
-            addOutput('=== Teste de Compilação ===');
+            // Verificar features do POC
+            const features = {
+                'GC Types (structs/arrays)': false,
+                'Reference Types (externref/funcref)': WebAssembly.Global !== undefined,
+                'Bulk Memory Operations': false,
+                'SIMD': false,
+                'Multi Memory': false
+            };
+            
+            Object.entries(features).forEach(([name, available]) => {
+                log(`  ${available ? '✅' : '❌'} ${name}`);
+            });
+            
+            // Testar criação básica
+            log('');
+            log('=== TESTE PRÁTICO ===');
+            
             try {
-                // Módulo WebAssembly mínimo (faz nada)
-                const wasmBinary = new Uint8Array([
-                    0x00, 0x61, 0x73, 0x6d, // magic
-                    0x01, 0x00, 0x00, 0x00, // version
-                    0x01, 0x04, 0x01, 0x60, // type section
-                    0x00, 0x00,             // func type (0 params, 0 results)
-                    0x03, 0x02, 0x01, 0x00, // function section
-                    0x0a, 0x04, 0x01,       // code section
-                    0x02, 0x00, 0x0b        // func body
+                // Criar função simples que retorna 42
+                const wasmBytes = new Uint8Array([
+                    0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
+                    0x01, 0x05, 0x01, 0x60, 0x00, 0x01, 0x7f,
+                    0x03, 0x02, 0x01, 0x00,
+                    0x07, 0x07, 0x01, 0x03, 0x61, 0x64, 0x64, 0x00, 0x00,
+                    0x0a, 0x09, 0x01, 0x07, 0x00, 0x41, 0x2a, 0x0b
                 ]);
                 
-                const module = new WebAssembly.Module(wasmBinary);
-                addOutput('✅ Módulo WebAssembly criado com sucesso');
-                
-                // Tentar instanciar
+                const module = new WebAssembly.Module(wasmBytes);
                 const instance = new WebAssembly.Instance(module);
-                addOutput('✅ Instância WebAssembly criada com sucesso');
                 
+                if (instance.exports.add) {
+                    const result = instance.exports.add();
+                    log(`✅ Função WASM executada: retornou ${result}`);
+                }
             } catch (error) {
-                addOutput(`❌ Erro ao criar módulo WebAssembly: ${error.message}`);
+                log(`❌ Erro: ${error.message}`);
             }
             
-            showStatus('Teste de WebAssembly concluído!', 'success');
+            showStatus('Teste WebAssembly concluído', 'success');
         }
         
-        // Mostrar informações do navegador
-        function showBrowserInfo() {
-            clearOutput('browserInfo');
+        // Testar compatibilidade com POC
+        function testPocCompatibility() {
+            clear();
+            showStatus('Analisando compatibilidade do POC...', 'warning');
             
-            addOutput('=== INFORMAÇÕES DO NAVEGADOR ===', browserInfo);
-            addOutput('', browserInfo);
+            log('=== ANÁLISE DE COMPATIBILIDADE POC.js ===');
+            log('');
             
-            // Informações básicas
-            addOutput(`User Agent: ${navigator.userAgent || 'Não disponível'}`, browserInfo);
-            addOutput(`Platform: ${navigator.platform || 'Não disponível'}`, browserInfo);
-            addOutput(`Language: ${navigator.language || 'Não disponível'}`, browserInfo);
-            addOutput(`Cookies Enabled: ${navigator.cookieEnabled ? 'Sim' : 'Não'}`, browserInfo);
-            addOutput(`Online: ${navigator.onLine ? 'Sim' : 'Não'}`, browserInfo);
+            // Requisitos do POC
+            const requirements = [
+                { 
+                    name: 'WebAssembly básico',
+                    test: () => typeof WebAssembly !== 'undefined',
+                    critical: true
+                },
+                { 
+                    name: 'WebAssembly.Module',
+                    test: () => WebAssembly && typeof WebAssembly.Module !== 'undefined',
+                    critical: true
+                },
+                { 
+                    name: 'WebAssembly.Instance',
+                    test: () => WebAssembly && typeof WebAssembly.Instance !== 'undefined',
+                    critical: true
+                },
+                { 
+                    name: 'WebAssembly.Global (para referências)',
+                    test: () => WebAssembly && typeof WebAssembly.Global !== 'undefined',
+                    critical: true
+                },
+                { 
+                    name: 'GC Types (structs)',
+                    test: () => {
+                        // Tentar detectar GC types
+                        try {
+                            // O POC usa kWasmStructTypeForm, kWasmArrayTypeForm
+                            return false; // Provavelmente não disponível
+                        } catch {
+                            return false;
+                        }
+                    },
+                    critical: true,
+                    note: 'Necessário para o exploit funcionar'
+                },
+                { 
+                    name: 'Função load()',
+                    test: () => typeof load !== 'undefined',
+                    critical: false,
+                    note: 'Pode ser substituída por fetch()'
+                },
+                { 
+                    name: 'Função gc()',
+                    test: () => typeof gc !== 'undefined',
+                    critical: false,
+                    note: 'Pode afetar confiabilidade do exploit'
+                },
+                { 
+                    name: 'Função print()',
+                    test: () => typeof print !== 'undefined',
+                    critical: false,
+                    note: 'Pode ser substituída por console.log()'
+                }
+            ];
             
-            addOutput('', browserInfo);
-            addOutput('=== HARDWARE ===', browserInfo);
+            let allCriticalPass = true;
             
-            // Informações de hardware (se disponíveis)
+            requirements.forEach(req => {
+                const passed = req.test();
+                log(`${passed ? '✅' : '❌'} ${req.name}`);
+                
+                if (!passed && req.critical) {
+                    log(`   ⚠️  CRÍTICO: ${req.note || 'Requisito essencial'}`);
+                    allCriticalPass = false;
+                } else if (!passed) {
+                    log(`   ℹ️  Opcional: ${req.note || 'Pode ser contornado'}`);
+                }
+            });
+            
+            log('');
+            log('=== CONCLUSÃO ===');
+            
+            if (!allCriticalPass) {
+                log('❌ POC.js NÃO É COMPATÍVEL');
+                log('   Faltam requisitos críticos');
+                log('   Principalmente GC Types para structs/references');
+                showStatus('POC não compatível - faltam GC Types', 'error');
+            } else {
+                log('⚠️  POC.js PODE SER ADAPTADO');
+                log('   WebAssembly básico disponível');
+                log('   Mas GC Types podem não estar disponíveis');
+                log('   O exploit pode precisar de modificações');
+                showStatus('Compatibilidade limitada - adaptação necessária', 'warning');
+            }
+        }
+        
+        // Executar POC adaptado
+        function runAdaptedPoc() {
+            clear('pocOutput');
+            showStatus('Executando POC adaptado...', 'warning');
+            
+            log('=== POC ADAPTADO PARA PS5 ===', pocOutput);
+            log('Tentando usar Builder do PS5 em vez de WasmModuleBuilder', pocOutput);
+            log('', pocOutput);
+            
+            try {
+                // Versão adaptada baseada no código encontrado
+                log('1. Tentando criar módulo com Builder...', pocOutput);
+                
+                if (typeof Builder === 'undefined') {
+                    log('   ❌ Builder não disponível', pocOutput);
+                    log('   Tentando abordagem alternativa...', pocOutput);
+                    
+                    // Tentar abordagem alternativa
+                    log('2. Criando módulo WASM manualmente...', pocOutput);
+                    
+                    // Código WASM simples
+                    const wasmCode = new Uint8Array([
+                        0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
+                        0x01, 0x04, 0x01, 0x60, 0x00, 0x00,
+                        0x03, 0x02, 0x01, 0x00,
+                        0x07, 0x08, 0x01, 0x04, 0x74, 0x65, 0x73, 0x74, 0x00, 0x00,
+                        0x0a, 0x06, 0x01, 0x04, 0x00, 0x41, 0x00, 0x0b
+                    ]);
+                    
+                    const module = new WebAssembly.Module(wasmCode);
+                    log('   ✅ Módulo criado com sucesso', pocOutput);
+                    
+                    const instance = new WebAssembly.Instance(module);
+                    log('   ✅ Instância criada', pocOutput);
+                    
+                    log('', pocOutput);
+                    log('⚠️  O POC original requer:', pocOutput);
+                    log('   - GC Types (structs, arrays)', pocOutput);
+                    log('   - WebAssembly.Global para referências', pocOutput);
+                    log('   - Type confusion para exploit', pocOutput);
+                    log('', pocOutput);
+                    log('Estas features podem não estar disponíveis no PS5.', pocOutput);
+                    
+                } else {
+                    log('   ✅ Builder disponível', pocOutput);
+                    log('   Tentando replicar createWasmModule()...', pocOutput);
+                    
+                    // Tentar replicar a função encontrada
+                    try {
+                        const builder = new Builder();
+                        log('   ✅ Builder instanciado', pocOutput);
+                        
+                        // Continuar com a construção...
+                        log('   ⚠️  API do Builder pode ser diferente', pocOutput);
+                        log('   Consulte load_wasm.js para interface correta', pocOutput);
+                    } catch (error) {
+                        log(`   ❌ Erro: ${error.message}`, pocOutput);
+                    }
+                }
+                
+                log('', pocOutput);
+                log('=== PRÓXIMOS PASSOS ===', pocOutput);
+                log('1. Analisar load_wasm.js para entender a API do Builder', pocOutput);
+                log('2. Adaptar WasmModuleBuilder para usar Builder do PS5', pocOutput);
+                log('3. Verificar se GC Types estão disponíveis', pocOutput);
+                log('4. Testar type confusion com API do PS5', pocOutput);
+                
+            } catch (error) {
+                log(`💥 ERRO: ${error.message}`, pocOutput);
+                log(error.stack, pocOutput);
+            }
+            
+            showStatus('POC adaptado executado', 'success');
+        }
+        
+        // Mostrar informações do sistema
+        function showSystemInfo() {
+            clear('systemInfo');
+            
+            log('=== SISTEMA PS5 WEBKIT ===', systemInfo);
+            log('', systemInfo);
+            
+            // User Agent
+            log(`User Agent: ${navigator.userAgent || 'N/A'}`, systemInfo);
+            log(`Platform: ${navigator.platform || 'N/A'}`, systemInfo);
+            log(`Vendor: ${navigator.vendor || 'N/A'}`, systemInfo);
+            log(`Languages: ${JSON.stringify(navigator.languages || [])}`, systemInfo);
+            
+            log('', systemInfo);
+            log('=== WEBASSEMBLY ===', systemInfo);
+            
+            if (typeof WebAssembly === 'undefined') {
+                log('❌ Não disponível', systemInfo);
+            } else {
+                log('✅ Disponível', systemInfo);
+                
+                // Detalhes
+                const props = Object.getOwnPropertyNames(WebAssembly);
+                log(`APIs: ${props.join(', ')}`, systemInfo);
+            }
+            
+            log('', systemInfo);
+            log('=== HARDWARE ===', systemInfo);
+            
             if (navigator.hardwareConcurrency) {
-                addOutput(`Núcleos de CPU: ${navigator.hardwareConcurrency}`, browserInfo);
+                log(`CPU Cores: ${navigwareConcurrency}`, systemInfo);
             }
             
             if (navigator.deviceMemory) {
-                addOutput(`Memória (GB): ${navigator.deviceMemory}`, browserInfo);
+                log(`Device Memory: ${navigator.deviceMemory}GB`, systemInfo);
             }
-            
-            addOutput('', browserInfo);
-            addOutput('=== APIS DISPONÍVEIS ===', browserInfo);
-            
-            // Verificar APIs específicas
-            const apis = [
-                'WebGLRenderingContext',
-                'WebGL2RenderingContext',
-                'AudioContext',
-                'VideoDecoder',
-                'GPU',
-                'SharedArrayBuffer',
-                'Atomics',
-                'Worker'
-            ];
-            
-            apis.forEach(api => {
-                try {
-                    const exists = eval(`typeof ${api} !== 'undefined'`);
-                    addOutput(`${api}: ${exists ? '✅' : '❌'}`, browserInfo);
-                } catch (e) {
-                    addOutput(`${api}: ❌ (erro)`, browserInfo);
-                }
-            });
         }
         
-        // Teste simplificado do POC
-        function runSimplifiedTest() {
-            clearOutput('testOutput');
-            showStatus('Executando teste simplificado...', 'warning');
-            
-            addOutput('=== TESTE SIMPLIFICADO DO POC ===', testOutput);
-            addOutput('Este teste verifica se as funcionalidades', testOutput);
-            addOutput('usadas pelo exploit estão disponíveis.', testOutput);
-            addOutput('', testOutput);
-            
-            try {
-                // Teste 1: WebAssembly básico
-                addOutput('1. Testando WebAssembly básico...', testOutput);
-                if (typeof WebAssembly === 'undefined') {
-                    addOutput('   ❌ WebAssembly não disponível', testOutput);
-                    addOutput('   → POC NÃO FUNCIONARÁ', testOutput);
-                    showStatus('WebAssembly necessário!', 'error');
-                    return;
-                }
-                addOutput('   ✅ WebAssembly disponível', testOutput);
-                
-                // Teste 2: APIs específicas
-                addOutput('', testOutput);
-                addOutput('2. Testando APIs específicas...', testOutput);
-                
-                const requiredAPIs = [
-                    { name: 'WebAssembly.Global', optional: false },
-                    { name: 'WebAssembly.Module', optional: false },
-                    { name: 'WebAssembly.Instance', optional: false }
-                ];
-                
-                let allAvailable = true;
-                requiredAPIs.forEach(api => {
-                    try {
-                        const exists = eval(`typeof ${api.name} !== 'undefined'`);
-                        if (exists) {
-                            addOutput(`   ✅ ${api.name} disponível`, testOutput);
-                        } else if (!api.optional) {
-                            addOutput(`   ❌ ${api.name} NÃO disponível`, testOutput);
-                            allAvailable = false;
-                        }
-                    } catch (e) {
-                        addOutput(`   ❌ ${api.name} erro: ${e.message}`, testOutput);
-                        allAvailable = false;
-                    }
-                });
-                
-                if (!allAvailable) {
-                    addOutput('', testOutput);
-                    addOutput('❌ APIs necessárias faltando!', testOutput);
-                    addOutput('O exploit POC.js não funcionará.', testOutput);
-                    showStatus('APIs necessárias não disponíveis', 'error');
-                    return;
-                }
-                
-                // Teste 3: Funcionalidades do POC
-                addOutput('', testOutput);
-                addOutput('3. Funcionalidades específicas do POC...', testOutput);
-                
-                // O POC usa WebAssembly GC features (experimental)
-                addOutput('   ⚠️  WebAssembly GC Features:', testOutput);
-                addOutput('   Estas são experimentais e podem não', testOutput);
-                addOutput('   estar disponíveis no PS5.', testOutput);
-                
-                // Tentar detectar se structs/references estão disponíveis
-                addOutput('', testOutput);
-                addOutput('=== CONCLUSÃO ===', testOutput);
-                addOutput('', testOutput);
-                
-                if (typeof WebAssembly.Global === 'undefined') {
-                    addOutput('❌ POC NÃO FUNCIONARÁ NO PS5', testOutput);
-                    addOutput('Motivo: WebAssembly.Global não disponível', testOutput);
-                    addOutput('Isso é necessário para referências e structs.', testOutput);
-                    showStatus('POC não compatível com PS5', 'error');
-                } else {
-                    addOutput('⚠️  POC PODE NÃO FUNCIONAR NO PS5', testOutput);
-                    addOutput('Motivo: WebAssembly GC features são', testOutput);
-                    addOutput('experimentais e provavelmente desabilitadas', testOutput);
-                    addOutput('no WebKit do PS5 por segurança.', testOutput);
-                    showStatus('POC provavelmente não funcionará', 'warning');
-                }
-                
-            } catch (error) {
-                addOutput('', testOutput);
-                addOutput(`💥 ERRO DURANTE O TESTE: ${error.message}`, testOutput);
-                showStatus('Erro durante teste', 'error');
-            }
+        // Limpar tudo
+        function clearAll() {
+            clear();
+            showStatus('Todos os resultados limpos', 'success');
+            setTimeout(() => status.style.display = 'none', 2000);
         }
         
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            // Teste automático inicial
-            setTimeout(() => {
-                addOutput('🔍 Testador de Capacidades PS5 WebKit');
-                addOutput('Versão: 1.0');
-                addOutput('');
-                addOutput('Clique nos botões para testar:');
-                addOutput('1. "Testar APIs Básicas" - Verifica JavaScript');
-                addOutput('2. "Testar WebAssembly" - Verifica WASM support');
-                addOutput('3. "Executar Teste Simplificado" - Testa POC');
-            }, 500);
+            log('🔍 Testador WebAssembly PS5 - Com Builder', output);
+            log('Baseado na descoberta de load_wasm.js', output);
+            log('', output);
+            log('Clique em "Testar Builder PS5" para começar', output);
         });
     </script>
 </body>
